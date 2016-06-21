@@ -122,10 +122,10 @@ void calibration_plot_single(std::string ten_file_txt, std::string ten_file1_txt
 	c00.Update();
 	
 	n++;
-	leg->AddEntry(gr12,title.c_str(),"p");
+	leg.AddEntry(gr12,title.c_str(),"p");
 	if(onetoone_leg == false)
 	{
-		leg->AddEntry(onetoone,"1:1 Reference Line","l");
+		leg.AddEntry(onetoone,"1:1 Reference Line","l");
 		onetoone_leg = true;
 	}
 
@@ -173,7 +173,7 @@ int calibration_plot_cyl_triple()
                 leg->SetBorderSize(1);
 
         TTree *t = new TTree();
-        t->ReadFile("./1layer_wide_sc_fit_results.txt","Bo:w:Bi:r:t:y:u:i:o:p");
+        t->ReadFile("./DataFiles/1layer_wide_sc_fit_results.txt","Bo:w:Bi:r:t:y:u:i:o:p");
         t->Draw("Bi:Bo","","pl SAME");
 	leg->AddEntry(t,"Rapheal's Measurement","pl");
 /*
