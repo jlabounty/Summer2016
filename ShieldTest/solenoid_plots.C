@@ -71,20 +71,47 @@ void calibration_plot_single(std::string ten_file_txt, std::string ten_file1_txt
 	gr4 = new TGraph(ten_time.size(),&(ten_voltage[0]),&(ten_field[0]));
                 gr4->Draw("AP");
                 gr4->SetMarkerColor(kRed);
-	TF1 *fit4 = new TF1("fit4","pol1",0,2000);
+	TF1 *fit4 = new TF1("fit4","pol1",11,2000);
         gr4->Fit("fit4","R");
         TF1 *f4 = gr4->GetFunction("fit4");
                 f4->SetName("f4");
-                f4->SetLineColor(kBlue-3);
+                f4->SetLineColor(kRed-3);
                 f4->SetRange(0,2000);
                 f4->Draw("SAME");
 	c2->Update();
+
+	TCanvas *c3 = new TCanvas();
+	gr55 = new TGraph(ten_time.size(),&(ten_voltage[0]),&(ten_field[0]));
+		gr55->Draw("AP");
+		gr55->SetMarkerColor(kGreen-3);
+	TF1 *fit5 = new TF1("fit5","pol2",9,11);
+	gr55->Fit("fit5","R");
+	TF1 *f5 = gr55->GetFunction("fit5");
+		f5->SetName("f5");
+		f5->SetLineColor(kRed);
+		f5->SetRange(9,11);
+		f5->Draw("SAME");
 	
 	vector<double> ten_voltageTOfield_1;
 
 	for(int i = 0; i < ten_voltage_1.size(); i++)
 	{
+//			ten_voltageTOfield_1.push_back(f4->Eval(ten_voltage_1[i]));
+
+		if(ten_voltage_1[i] < 2)
+		{
+			ten_voltageTOfield_1.push_back(0.00);
+		}
+		else if(ten_voltage_1[i] < 11)
+		{
+			ten_voltageTOfield_1.push_back(f5->Eval(ten_voltage_1[i]));
+		}
+		else
+		{
 			ten_voltageTOfield_1.push_back(f4->Eval(ten_voltage_1[i]));
+		}
+
+
 	}
 
 	TCanvas *c12 = new TCanvas();
@@ -120,7 +147,7 @@ void calibration_plot_single(std::string ten_file_txt, std::string ten_file1_txt
 	cout << "All done with: " << title << endl;
 }
 
-int calibration_plot_cyl_single()
+int solenoid_plots()
 {
 
 	//Overlapping sample	
@@ -131,22 +158,4 @@ int calibration_plot_cyl_single()
 
 	return 0;
 }
-
-
-
-
-
-
-
-
-
-/*
-
-	//Overlapping sample	
-	calibration_plot_single(
-		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160620_171602.txt",	//Room temperature calibration 
-		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160620_174706.txt",	//Before baking
-		"Small Cylinder (6/20/16) Shielding");	//Title of plot
-
-*/
 

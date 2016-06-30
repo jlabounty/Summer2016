@@ -1,12 +1,12 @@
 int n=2;
 bool onetoone_leg = false;
 
-void calibration_plot_single(std::string ten_file_txt, std::string ten_file1_txt, std::string title, TCanvas &c00, TLegend &leg)
+void Solenoid_calib_single(std::string ten_file_txt, std::string ten_file1_txt, std::string title, TCanvas &c00, TLegend &leg)
 {
 //Measurement Files
 
 
-	std::ifstream ten_file(ten_file_txt.c_str()); //first run no cooling
+  std::ifstream ten_file(ten_file_txt.c_str()); //first run no cooling
 	std::ifstream ten_file1(ten_file1_txt.c_str()); //second run with cooling
 
         std::string str;
@@ -116,15 +116,6 @@ void calibration_plot_single(std::string ten_file_txt, std::string ten_file1_txt
 	}
 
 
-/*	
-	vector<double> ten_voltageTOfield_1;
-
-	for(int i = 0; i < ten_voltage_1.size(); i++)
-	{
-			ten_voltageTOfield_1.push_back(f4->Eval(ten_voltage_1[i]));
-	}
-*/
-
 	c00.cd();
         gr12 = new TGraph(ten_time_1.size(),&(ten_voltageTOfield_1[0]),&(ten_field_1[0]));
                 if (n<2) 
@@ -142,16 +133,25 @@ void calibration_plot_single(std::string ten_file_txt, std::string ten_file1_txt
                 gr12->SetTitle(title.c_str());
 		if(n == 5) n++; //I dont like yellow on graphs
                 gr12->SetMarkerColor(n);
-        TF1 *onetoone = new TF1("onetoone","pol1",0,150);
+        TF1 *onetoone = new TF1("onetoone","pol1",0,1500);
 		onetoone->SetParameter(0,0);
 		onetoone->SetParameter(1,1);
 		onetoone->SetLineColor(kBlack);
 		onetoone->SetLineStyle(7);
 	onetoone->Draw("SAME");
-        leg4 = new TLegend(0.2,0.8,0.48,0.9);
-		leg4->AddEntry(gr12,title.c_str(),"p");
-                leg4->AddEntry(onetoone,"1:1 Reference Line","l");
-        leg4->Draw();
+	TF1 *fit6 = new TF1("fit6","pol1",25,2000);
+        gr12->Fit("fit6","R");
+        TF1 *f6 = gr12->GetFunction("fit6");
+                f6->SetName("f6");
+                f6->SetLineColor(n);
+                f6->SetRange(0,2000);
+		double y_int = f6->GetParameter(0);
+		f6->Delete();
+	TF1 *f7 = new TF1("f7","pol1",0,2000);
+		f7->SetParameter(0,y_int);
+		f7->SetParameter(1,1);
+		f7->SetLineStyle(3);
+		f7->Draw("SAME");
 	c00.SetFixedAspectRatio();
 	c00.Update();
 	
@@ -162,6 +162,8 @@ void calibration_plot_single(std::string ten_file_txt, std::string ten_file1_txt
 		onetoone_leg = true;
 	}
 	leg.AddEntry(gr12,title.c_str(),"p");
+	std::string title_ext = title + " Linearly Extrapolated";
+	leg.AddEntry(f7,title_ext.c_str(),"l");
 
 
 	c1->Close();
@@ -178,17 +180,95 @@ void calibration_plot_single(std::string ten_file_txt, std::string ten_file1_txt
 	cout << "All done with: " << title << endl;
 }
 
-int calibration_plot_cyl_triple()
+int Helium_calib_single(std::string helium_file, std::string title, TCanvas &c00, TLegend &leg)
 {
+	TTree *t1 = new TTree();
+	t1->ReadFile(helium_file.c_str(),"amperage:field");
 
-        gStyle->SetOptStat(0);
+	TCanvas *c0 = new TCanvas();	
+	t1->Draw("amperage:field");
+	c0->Close();
+
+	vector<double> seconds;
+	for(int i = 0; i < t1->GetEntries(); i++)
+	{
+		seconds.push_back(i);
+	}
+
+
+	vector<double> fields;
+	for ( int i = 0; i < t1->GetEntries(); i++ )
+	{
+		fields.push_back( -1*t1->GetV2()[i] );
+	}
+
+
+	vector<double> amps;
+	for ( int i = 0; i < t1->GetEntries(); i++ )
+	{
+		amps.push_back( t1->GetV1()[i] );
+	}
+
+
+	int seconds_min;
+	for (int i = 1; i< seconds.size(); i++)
+	{
+		if(TMath::Abs(amps[i]) > TMath::Abs(amps[i-1])) seconds_min = seconds[i];
+	}
+
+	vector<double> applied_fields;
+	for ( int i = 0; i < t1->GetEntries(); i++ )
+	{
+		applied_fields.push_back( t1->GetV1()[i]*58.8 );
+	}
+
+
+
+        TCanvas *c1 = new TCanvas();
+        gr1 = new TGraph(seconds_min,&(applied_fields[0]),&(fields[0]));
+                gr1->Draw("AP");
+                gr1->GetXaxis()->SetTitle("External Field (mT)");
+                gr1->GetYaxis()->SetTitle("Internal Field (mT)");
+                gr1->SetTitle("Internal vs. External Magnetic Field");
+                gr1->SetMarkerColor(kGreen);
+
+	TCanvas *c2 = new TCanvas();
+        gr2 = new TGraph(seconds.size(),&(seconds[0]),&(fields[0]));
+                gr2->Draw("AP");
+                gr2->GetXaxis()->SetTitle("Time (seconds)");
+                gr2->GetYaxis()->SetTitle("Internal Field (mT)");
+                gr2->SetTitle("Internal Field vs. Time");
+                gr2->SetMarkerColor(kBlue);
+
+	c00.cd();
+        gr3 = new TGraph(seconds_min,&(applied_fields[0]),&(fields[0]));
+	gr3->Draw("p SAME");
+                gr3->GetXaxis()->SetTitle("External Field (mT)");
+                gr3->GetYaxis()->SetTitle("Internal Field (mT)");
+                gr3->SetTitle("Internal vs. External Magnetic Field");
+		if(n==5) n++;
+                gr3->SetMarkerColor(n);
+		n++;
+
+	leg.AddEntry(gr3,title.c_str(),"p");
+
+	c1->Close();
+	c2->Close();
+
+	return 0;
+}
+
+
+int HeliumPlots()
+{
+       gStyle->SetOptStat(0);
 	std::string title = "Applied Field vs. Internal FIeld of Small SC Tubes";
 
 	double ymin, ymax, xmax, xmin;
 	ymin = 0;
-	ymax = 100;
+	ymax = 600;
 	xmin = 0;
-	xmax = 100;
+	xmax = ymax;
 
 	TCanvas *c00 = new TCanvas();
 	c00->cd();
@@ -206,47 +286,49 @@ int calibration_plot_cyl_triple()
 
         leg = new TLegend(0.2,0.9,0.7,0.75);
                 leg->SetBorderSize(1);
-/*
-        TTree *t = new TTree();
-        t->ReadFile("./DataFiles/1layer_wide_sc_fit_results.txt","Bo:w:Bi:r:t:y:u:i:o:p");
-        t->Draw("Bi:Bo","","pl SAME");
-	leg->AddEntry(t,"Rapheal's Measurement","pl");
-*/
+//		leg->SetTextSize(.03);
 
-	calibration_plot_single(
-		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160629_120947.txt",	//Room temperature calibration 
-		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160629_123602.txt",	//Before baking
-		"Single Piece No Overlap (6/28)",
-		*c00,
-		*leg);	//Title of plot
-
-
-	calibration_plot_single(
+	Solenoid_calib_single(
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160629_132435.txt",	//Room temperature calibration 
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160629_134030.txt",	//Before baking
-		"22 mm Half Cylinders with Overlap",
+		"22 mm YBCO 1/2 Sheets Nitrogen",
 		*c00,
 		*leg);	//Title of plot
+
+	Helium_calib_single(
+		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/HeliumTest_2016_06_29/HeliumScan1_2016_06_29.txt.txt",
+		"22 mm YBCO 1/2 Sheets Helium",
+		*c00,
+		*leg);
+
 /*
-	calibration_plot_single(
-		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160628_183924.txt",	//Room temperature calibration 
-		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160628_190527.txt",	//Before baking
-		"1 layer AMSC SC tape wrapped in same direction as tape, 6/20/16",
+	Helium_calib_single(
+		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/HeliumTest_2016_06_29/HeliumScan2_2016_06_29.txt",
+		"22 mm YBCO 1/2 Sheets Helium Retest",
 		*c00,
-		*leg);	//Title of plot
+		*leg);
 */
 
-	calibration_plot_single(
-		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160628_201006.txt",	//Room temperature calibration 
-		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160628_203112.txt",	//Before baking
-		"Single Piece With Overlap (6/28)",
+	Helium_calib_single(
+		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/HeliumTest_2016_06_29/HeliumScan4_2016_06_29.txt",
+		"22 mm YBCO 1/2 Sheets Helium, 2 layers",
 		*c00,
-		*leg);	//Title of plot
+		*leg);
 
 
+	Helium_calib_single(
+		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/HeliumTest_2016_06_29/HeliumScan3_2016_06_29.txt",
+		"NbTi Helium 1/2 Sheets",
+		*c00,
+		*leg);
 
+	Helium_calib_single(
+		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/HeliumTest_2016_06_29/HeliumScan5_2016_06_29.txt",
+		"NbTi Helium No Overlap",
+		*c00,
+		*leg);
 
-        leg->Draw();
+	leg->Draw();
 
 	return 0;
 }
