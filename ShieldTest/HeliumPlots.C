@@ -1,7 +1,8 @@
 int n=2;
-bool onetoone_leg = false;
+bool onetoone_leg = true;
+bool lin_extrap = false;
 
-void Solenoid_calib_single(std::string ten_file_txt, std::string ten_file1_txt, std::string title, TCanvas &c00, TLegend &leg)
+void Solenoid_calib_single_old(std::string ten_file_txt, std::string ten_file1_txt, std::string title, TCanvas &c00, TLegend &leg, int color)
 {
 //Measurement Files
 
@@ -132,26 +133,29 @@ void Solenoid_calib_single(std::string ten_file_txt, std::string ten_file1_txt, 
                 gr12->GetYaxis()->SetRangeUser(0,125);
                 gr12->SetTitle(title.c_str());
 		if(n == 5) n++; //I dont like yellow on graphs
-                gr12->SetMarkerColor(n);
+                gr12->SetMarkerColor(color);
         TF1 *onetoone = new TF1("onetoone","pol1",0,1500);
 		onetoone->SetParameter(0,0);
 		onetoone->SetParameter(1,1);
 		onetoone->SetLineColor(kBlack);
 		onetoone->SetLineStyle(7);
 	onetoone->Draw("SAME");
-	TF1 *fit6 = new TF1("fit6","pol1",25,2000);
-        gr12->Fit("fit6","R");
-        TF1 *f6 = gr12->GetFunction("fit6");
-                f6->SetName("f6");
-                f6->SetLineColor(n);
-                f6->SetRange(0,2000);
-		double y_int = f6->GetParameter(0);
-		f6->Delete();
-	TF1 *f7 = new TF1("f7","pol1",0,2000);
-		f7->SetParameter(0,y_int);
-		f7->SetParameter(1,1);
-		f7->SetLineStyle(3);
-		f7->Draw("SAME");
+	if(lin_extrap)
+	{
+		TF1 *fit6 = new TF1("fit6","pol1",25,2000);
+		gr12->Fit("fit6","R");
+		TF1 *f6 = gr12->GetFunction("fit6");
+			f6->SetName("f6");
+			f6->SetLineColor(color);
+			f6->SetRange(0,2000);
+			double y_int = f6->GetParameter(0);
+			f6->Delete();
+		TF1 *f7 = new TF1("f7","pol1",0,2000);
+			f7->SetParameter(0,y_int);
+			f7->SetParameter(1,1);
+			f7->SetLineStyle(3);
+			f7->Draw("SAME");
+	}
 	c00.SetFixedAspectRatio();
 	c00.Update();
 	
@@ -162,8 +166,11 @@ void Solenoid_calib_single(std::string ten_file_txt, std::string ten_file1_txt, 
 		onetoone_leg = true;
 	}
 	leg.AddEntry(gr12,title.c_str(),"p");
-	std::string title_ext = title + " Linearly Extrapolated";
-	leg.AddEntry(f7,title_ext.c_str(),"l");
+	if(lin_extrap)
+	{
+		std::string title_ext = title + " Linearly Extrapolated";
+		leg.AddEntry(f7,title_ext.c_str(),"l");
+	}
 
 
 	c1->Close();
@@ -180,7 +187,154 @@ void Solenoid_calib_single(std::string ten_file_txt, std::string ten_file1_txt, 
 	cout << "All done with: " << title << endl;
 }
 
-int Helium_calib_single(std::string helium_file, std::string title, TCanvas &c00, TLegend &leg)
+
+
+void Solenoid_calib_single(std::string ten_file_txt, std::string ten_file1_txt, std::string title, TCanvas &c00, TLegend &leg, int color)
+{
+//Measurement Files
+
+
+	std::ifstream ten_file(ten_file_txt.c_str()); //first run no cooling
+	std::ifstream ten_file1(ten_file1_txt.c_str()); //second run with cooling
+
+        std::string str;
+        double ti, xi, yi;
+        vector<double> ten_time, ten_field, ten_voltage;
+        vector<double> ten_time_1, ten_field_1, ten_voltage_1;
+
+        while (std::getline(ten_file, str))
+        {
+                if(ten_file >> ti >> xi >> yi)
+                {
+                        ten_time.push_back(ti); //Time
+                        ten_voltage.push_back(TMath::Abs(xi)); //Current in mA -> Voltage in mV
+                        ten_field.push_back(TMath::Abs(yi)); //Magnetic Field (mT)
+                }
+        }
+
+        while (std::getline(ten_file1, str))
+        {
+                if(ten_file1 >> ti >> xi >> yi)
+                {
+                        ten_time_1.push_back(ti); //Time
+                        ten_voltage_1.push_back(TMath::Abs(xi)); //Current in mA -> Voltage in mV
+                        ten_field_1.push_back(TMath::Abs(yi)); //Magnetic Field (mT)
+                }
+        }
+
+	TCanvas *c1 = new TCanvas();
+        gr1 = new TGraph(ten_time.size(),&(ten_voltage[0]),&(ten_field[0]));
+                gr1->Draw("AP");
+                gr1->GetXaxis()->SetTitle("Voltage (mV)");
+                gr1->GetYaxis()->SetTitle("Magnitude of Magnetic Field (mT)");
+                gr1->SetTitle("Voltage from Power Supply vs. Magnetic Field");
+                gr1->SetMarkerColor(kRed);
+        c1->Update();
+
+        gr2 = new TGraph(ten_time_1.size(),&(ten_voltage_1[0]),&(ten_field_1[0]));
+                gr2->Draw("p SAME");
+                gr2->GetXaxis()->SetTitle("Voltage (mV)");
+                gr2->GetYaxis()->SetTitle("Magnitude of Magnetic Field (mT)");
+                gr2->SetTitle("Voltage from Power Supply vs. Magnetic Field");
+                gr2->SetMarkerColor(kBlue);
+        c1->Update();
+
+        leg3 = new TLegend(0.2,0.8,0.48,0.9);
+                leg3->AddEntry(gr1,"Room Temperature","p");
+                leg3->AddEntry(gr2,"Cryo","p");
+        leg3->Draw();
+
+	TCanvas *c2 = new TCanvas();
+	gr4 = new TGraph(ten_time.size(),&(ten_voltage[0]),&(ten_field[0]));
+                gr4->Draw("AP");
+                gr4->SetMarkerColor(kRed);
+	TF1 *fit4 = new TF1("fit4","pol1",0,2000);
+        gr4->Fit("fit4","R");
+        TF1 *f4 = gr4->GetFunction("fit4");
+                f4->SetName("f4");
+                f4->SetLineColor(kBlue-3);
+                f4->SetRange(0,2000);
+                f4->Draw("SAME");
+	c2->Update();
+
+        vector<double> ten_voltageTOfield_1;
+
+        for(int i = 0; i < ten_voltage_1.size(); i++)
+        {
+		ten_voltageTOfield_1.push_back(f4->Eval(ten_voltage_1[i]));
+	}
+
+
+	c00.cd();
+        gr12 = new TGraph(ten_time_1.size(),&(ten_voltageTOfield_1[0]),&(ten_field_1[0]));
+                if (n<2) 
+		{
+			gr12->Draw("AP");
+		}
+		else
+		{
+			gr12->Draw("P SAME");
+		}
+                gr12->GetXaxis()->SetTitle("Applied Field (mT)");
+                gr12->GetXaxis()->SetRangeUser(0,125);
+                gr12->GetYaxis()->SetTitle("Magnetic Field within Shield (mT)");
+                gr12->GetYaxis()->SetRangeUser(0,125);
+                gr12->SetTitle(title.c_str());
+		if(n == 5) n++; //I dont like yellow on graphs
+                gr12->SetMarkerColor(color);
+        TF1 *onetoone = new TF1("onetoone","pol1",0,1500);
+		onetoone->SetParameter(0,0);
+		onetoone->SetParameter(1,1);
+		onetoone->SetLineColor(kBlack);
+		onetoone->SetLineStyle(7);
+	onetoone->Draw("SAME");
+	if(lin_extrap)
+	{
+		TF1 *fit6 = new TF1("fit6","pol1",25,2000);
+		gr12->Fit("fit6","R");
+		TF1 *f6 = gr12->GetFunction("fit6");
+			f6->SetName("f6");
+			f6->SetLineColor(color);
+			f6->SetRange(0,2000);
+			double y_int = f6->GetParameter(0);
+			f6->Delete();
+		TF1 *f7 = new TF1("f7","pol1",0,2000);
+			f7->SetParameter(0,y_int);
+			f7->SetParameter(1,1);
+			f7->SetLineStyle(3);
+			f7->Draw("SAME");
+	}
+	c00.SetFixedAspectRatio();
+	c00.Update();
+	
+	n++;
+	if(onetoone_leg == false)
+	{
+		leg.AddEntry(onetoone,"1:1 Reference Line","l");
+		onetoone_leg = true;
+	}
+	leg.AddEntry(gr12,title.c_str(),"p");
+	if(lin_extrap)
+	{
+		std::string title_ext = title + " Linearly Extrapolated";
+		leg.AddEntry(f7,title_ext.c_str(),"l");
+	}
+
+
+	c1->Close();
+	c2->Close();
+
+//	gr2->SetMarkerColor(kRed);
+//	gr2->Draw("p SAME");
+//	onetoone->Draw("l SAME");
+
+//	gr1->SetMarkerColor(kBlue);
+//	gr1->Draw("p SAME");
+
+	cout << "All done with: " << title << endl;
+}
+
+int Helium_calib_single(std::string helium_file, std::string title, TCanvas &c00, TLegend &leg, int color)
 {
 	TTree *t1 = new TTree();
 	t1->ReadFile(helium_file.c_str(),"amperage:field");
@@ -219,7 +373,7 @@ int Helium_calib_single(std::string helium_file, std::string title, TCanvas &c00
 	vector<double> applied_fields;
 	for ( int i = 0; i < t1->GetEntries(); i++ )
 	{
-		applied_fields.push_back( t1->GetV1()[i]*58.8 );
+		applied_fields.push_back( t1->GetV1()[i]*58.8 ); //58/8 mT/A conversion given by Xu Du
 	}
 
 
@@ -247,7 +401,7 @@ int Helium_calib_single(std::string helium_file, std::string title, TCanvas &c00
                 gr3->GetYaxis()->SetTitle("Internal Field (mT)");
                 gr3->SetTitle("Internal vs. External Magnetic Field");
 		if(n==5) n++;
-                gr3->SetMarkerColor(n);
+                gr3->SetMarkerColor(color);
 		n++;
 
 	leg.AddEntry(gr3,title.c_str(),"p");
@@ -262,21 +416,27 @@ int Helium_calib_single(std::string helium_file, std::string title, TCanvas &c00
 
 int HeliumPlots()
 {
-       gStyle->SetOptStat(0);
-	std::string title = "Applied Field vs. Internal FIeld of Small SC Tubes";
+	int color = 2;
+	gStyle->SetOptStat(0);
+//	std::string title = "Applied Field vs. Internal FIeld of Small SC Tubes";
+	std::string title = "1 Layer YBCO lN2 vs. lHe --- Stable region only";
 
 	double ymin, ymax, xmax, xmin;
 	ymin = 0;
-	ymax = 600;
+//	ymax = 300;
+	ymax = 200;
 	xmin = 0;
-	xmax = ymax;
+//	xmax = 600;
+	xmax = 400;
 
 	TCanvas *c00 = new TCanvas();
 	c00->cd();
         TH1F *blank = new TH1F("blank",title.c_str(),10,xmin,xmax);
                 blank->GetYaxis()->SetRangeUser(ymin,ymax);
-                blank->GetXaxis()->SetTitle("Applied Field (mT)");
-                blank->GetYaxis()->SetTitle("Internal Field (mT)");
+//                blank->GetXaxis()->SetTitle("Applied Field (mT)");
+                blank->GetXaxis()->SetTitle("B_{0} (mT)");
+//                blank->GetYaxis()->SetTitle("Internal Field (mT)");
+                blank->GetYaxis()->SetTitle("B_{i} (mT)");
                 blank->GetXaxis()->SetNdivisions(505);
                 blank->GetYaxis()->SetNdivisions(505);
                 blank->SetLineColor(0);
@@ -284,50 +444,110 @@ int HeliumPlots()
 
 	c00->SetGridx(1);
 	c00->SetGridy(1);
+	c00->SetFixedAspectRatio();
 
         leg = new TLegend(0.2,0.9,0.7,0.75);
                 leg->SetBorderSize(1);
-//		leg->SetTextSize(.03);
 
-	Solenoid_calib_single(
+        TF1 *onetoone = new TF1("onetoone","pol1",0,1500);
+		onetoone->SetParameter(0,0);
+		onetoone->SetParameter(1,1);
+		onetoone->SetLineColor(kBlack);
+		onetoone->SetLineStyle(7);
+	onetoone->Draw("SAME");
+	leg.AddEntry(onetoone,"1:1 Reference","l");
+
+/*
+        TTree *t = new TTree();
+        t->ReadFile("./DataFiles/1layer_wide_sc_fit_results.txt","Bo:w:Bi:r:t:y:u:i:o:p");
+        t->Draw("Bi:Bo","","pl SAME");
+        leg->AddEntry(t,"Rapheal's Measurement","pl");
+*/
+
+
+/*
+	Solenoid_calib_single_old(
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160629_132435.txt",	//Room temperature calibration 
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160629_134030.txt",	//Before baking
-		"22 mm YBCO 1/2 Sheets Nitrogen",
+		"22 mm YBCO 1/2 Sheets Nitrogen OLD CALIBRATION`",
 		*c00,
-		*leg);	//Title of plot
+		*leg,
+		1);	//Title of plot
+	color++;
+	if(color == 5) color++;
+
+*/
+
+
+	Solenoid_calib_single(
+		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_102426.txt",	//Shunt resistor calibration file
+		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_114940.txt",	//Measurement File
+		"1 Layer YBCO (lN2)",
+		*c00,
+		*leg,
+		color);	//Title of plot
+
+	color++;
+	if(color == 5) color++;
 
 	Helium_calib_single(
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/HeliumTest_2016_06_29/HeliumScan1_2016_06_29.txt.txt",
-		"22 mm YBCO 1/2 Sheets Helium",
+//		"22 mm YBCO 1/2 Sheets Helium (Trial 1)",
+//		"He Trial 1",
+		"1 Layer YBCO (lHe)",
 		*c00,
-		*leg);
+		*leg,
+		color);
+	color++;
+	if(color == 5) color++;
 
-
+/*
 	Helium_calib_single(
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/HeliumTest_2016_06_29/HeliumScan2_2016_06_29.txt",
-		"22 mm YBCO 1/2 Sheets Helium Retest",
+		"He Trial 2",
+//		"22 mm YBCO 1/2 Sheets Helium (Trial 2)",
 		*c00,
-		*leg);
+		*leg,
+		color);
+*/
+	color++;
+	if(color == 5) color++;
 
-
+/*
 	Helium_calib_single(
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/HeliumTest_2016_06_29/HeliumScan4_2016_06_29.txt",
-		"22 mm YBCO 1/2 Sheets Helium, 2 layers",
+//		"22 mm YBCO 1/2 Sheets Helium, 2 layers",
+		"2 layers YBCO",
 		*c00,
-		*leg);
+		*leg,
+		color);
+*/
+	color++;
+	if(color == 5) color++;
 
 
+
+/*
 	Helium_calib_single(
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/HeliumTest_2016_06_29/HeliumScan3_2016_06_29.txt",
-		"NbTi Helium 1/2 Sheets",
+//		"NbTi Helium 1/2 Sheets",
+		"1 Layer NbTi",
 		*c00,
-		*leg);
-
+		*leg,
+		color);
+*/
+	color++;
+	if(color == 5) color++;
+/*
 	Helium_calib_single(
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/HeliumTest_2016_06_29/HeliumScan5_2016_06_29.txt",
 		"NbTi Helium No Overlap",
 		*c00,
-		*leg);
+		*leg,
+		color);
+*/
+	color++;
+	if(color == 5) color++;
 
 	leg->Draw();
 
