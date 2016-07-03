@@ -5,13 +5,13 @@ void calibration_plot_single(std::string ten_file_txt, std::string ten_file1_txt
 
 	std::ifstream ten_file(ten_file_txt.c_str()); //first run no cooling
 	std::ifstream ten_file1(ten_file1_txt.c_str()); //second run with cooling
-	std::ifstream ten_file2(ten_file2_txt.c_str()); //second run with cooling
+//	std::ifstream ten_file2(ten_file2_txt.c_str()); //second run with cooling
 
         std::string str;
         double ti, xi, yi;
         vector<double> ten_time, ten_field, ten_voltage;
         vector<double> ten_time_1, ten_field_1, ten_voltage_1;
-        vector<double> ten_time_2, ten_field_2, ten_voltage_2;
+//        vector<double> ten_time_2, ten_field_2, ten_voltage_2;
 
         while (std::getline(ten_file, str))
         {
@@ -32,7 +32,7 @@ void calibration_plot_single(std::string ten_file_txt, std::string ten_file1_txt
                         ten_field_1.push_back(TMath::Abs(yi)); //Magnetic Field (mT)
                 }
         }
-
+/*
         while (std::getline(ten_file2, str))
         {
                 if(ten_file2 >> ti >> xi >> yi)
@@ -42,7 +42,7 @@ void calibration_plot_single(std::string ten_file_txt, std::string ten_file1_txt
                         ten_field_2.push_back(TMath::Abs(yi)); //Magnetic Field (mT)
                 }
         }
-
+*/
 	TCanvas *c1 = new TCanvas();
         gr1 = new TGraph(ten_time.size(),&(ten_voltage[0]),&(ten_field[0]));
                 gr1->Draw("AP");
@@ -73,7 +73,7 @@ void calibration_plot_single(std::string ten_file_txt, std::string ten_file1_txt
                 f2->SetRange(0,300);
                 f2->Draw("SAME");
         c1->Update();
-
+/*
         gr3 = new TGraph(ten_time_2.size(),&(ten_voltage_2[0]),&(ten_field_2[0]));
                 gr3->Draw("p SAME");
                 gr3->GetXaxis()->SetTitle("Voltage (mV)");
@@ -88,11 +88,11 @@ void calibration_plot_single(std::string ten_file_txt, std::string ten_file1_txt
                 f3->SetRange(0,300);
                 f3->Draw("SAME");
         c1->Update();
-
+*/
         leg3 = new TLegend(0.2,0.8,0.48,0.9);
                 leg3->AddEntry(gr1,"Room Temperature","p");
                 leg3->AddEntry(gr2,"Cryo","p");
-                leg3->AddEntry(gr3,"Cryo After Baking","p");
+//                leg3->AddEntry(gr3,"Cryo After Baking","p");
         leg3->Draw();
 
 	TCanvas *c2 = new TCanvas();
@@ -135,7 +135,7 @@ void calibration_plot_single(std::string ten_file_txt, std::string ten_file1_txt
 			ten_voltageTOfield_1.push_back(f4->Eval(ten_voltage_1[i]));
 		}
 	}
-
+/*
 	vector<double> ten_voltageTOfield_2;
 
 	for(int i = 0; i < ten_voltage_2.size(); i++)
@@ -153,31 +153,59 @@ void calibration_plot_single(std::string ten_file_txt, std::string ten_file1_txt
 			ten_voltageTOfield_2.push_back(f4->Eval(ten_voltage_2[i]));
 		}
 	}
-
-
+*/
+	vector<double>  shielded_overlap, shielded_non;
+	for (int i = 0; i < ten_voltage_1.size(); i++)
+	{
+		shielded_overlap.push_back(ten_voltageTOfield_1[i] - ten_field_1[i]);
+	}
+/*	for (int i = 0; i < ten_voltage_2.size(); i++)
+	{
+		shielded_non.push_back(ten_voltageTOfield_2[i] - ten_field_2[i]);
+	}
+*/	
+	TCanvas *c3 = new TCanvas();
         gr12 = new TGraph(ten_time_1.size(),&(ten_voltageTOfield_1[0]),&(ten_field_1[0]));
+        //gr12 = new TGraph(ten_time_1.size(),&(ten_voltageTOfield_1[0]),&(shielded_overlap[0]));
+        //gr12 = new TGraph(ten_time_1.size(),&(shielded_overlap[0]),&(ten_field_1[0]));
                 gr12->Draw("AP");
                 gr12->GetXaxis()->SetTitle("Applied Field (mT)");
                 gr12->GetXaxis()->SetRangeUser(0,125);
-                gr12->GetYaxis()->SetTitle("Magnetic Field within Shield (mT)");
+                //gr12->GetYaxis()->SetTitle("Magnetic Field within Shield (mT)");
+                gr12->GetYaxis()->SetTitle("B_{o} - B_{i} (mT)");
                 gr12->GetYaxis()->SetRangeUser(0,125);
                 gr12->SetTitle(title.c_str());
                 gr12->SetMarkerColor(kBlue);
-        gr6 = new TGraph(ten_time_2.size(),&(ten_voltageTOfield_2[0]),&(ten_field_2[0]));
+/*        gr6 = new TGraph(ten_time_2.size(),&(ten_voltageTOfield_2[0]),&(ten_field_2[0]));
+        //gr6 = new TGraph(ten_time_2.size(),&(ten_voltageTOfield_2[0]),&(shielded_non[0]));
+        //gr6 = new TGraph(ten_time_2.size(),&(shielded_non[0]),&(ten_field_2[0]));
 		gr6->SetMarkerColor(kRed);
 		gr6->Draw("p SAME");
-        TF1 *onetoone = new TF1("onetoone","pol1",0,150);
+*/        TF1 *onetoone = new TF1("onetoone","pol1",0,150);
 		onetoone->SetParameter(0,0);
 		onetoone->SetParameter(1,1);
 		onetoone->SetLineColor(kBlack);
 		onetoone->SetLineStyle(7);
 	onetoone->Draw("SAME");
+
+        TTree *t = new TTree();
+        t->ReadFile("./DataFiles/1layer_wide_sc_fit_results.txt","Bo:w:Bi:r:t:y:u:i:o:p");
+        TCanvas *ctemp = new TCanvas();
+t->Draw("Bi:Bo:r","","pl");
+c2->cd();	
+	TGraphErrors *r = new TGraphErrors(t->GetEntries(),t->GetV2(),t->GetV1());
+for ( int i = 0; i < t->GetEntries(); i++ )
+r->SetPointError(i,0, t->GetV3()[i]);
+r->Draw("Psame");
+
         leg4 = new TLegend(0.2,0.8,0.48,0.9);
 //		leg4->AddEntry(gr2,"Shielding Before Baking","p");
 //		leg4->AddEntry(gr6,"Shielding After Baking","p");
 		leg4->AddEntry(gr12,"Overlapping Shielding","p");
-		leg4->AddEntry(gr6,"Non-Overlapping Shielding","p");
+//		leg4->AddEntry(gr6,"Non-Overlapping Shielding","p");
                 leg4->AddEntry(onetoone,"1:1 Reference Line","l");
+		leg4->AddEntry(t,"Rapheal's Measurement","pl");
+	leg4->SetBorderSize(1);
         leg4->Draw();
 
 

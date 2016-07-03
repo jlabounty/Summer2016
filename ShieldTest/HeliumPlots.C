@@ -7,6 +7,7 @@ int HeliumPlots()
 	std::string title = "YBCO vs. NbTi at N + He";	//Title of the canvas which will host all of the plots
 	bool plot_reference_line = false;	//If true will plot a 1:1 reference line on top of the plots.
 	bool plot_rapheal = false; 		//If true will plot rapheals measurement on top of new measurement
+	bool draw_legend = true;		//If true will draw legend on plot
 
 	double ymin, ymax, xmax, xmin;
 	ymin = 0;	//Defines the range of the canvas which will be printed in x and y
@@ -100,7 +101,7 @@ int HeliumPlots()
 */
 	color++;
 	if(color == 5) color++;
-
+/*
 	Helium_calib_single(
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/HeliumTest_2016_06_29/HeliumScan1_2016_06_29.txt.txt",
 //		"22 mm YBCO 1/2 Sheets Helium (Trial 1)",
@@ -110,7 +111,7 @@ int HeliumPlots()
 		*c00,
 		*leg,
 		color);
-
+*/
 	color++;
 	if(color == 5) color++;
 
@@ -175,7 +176,7 @@ int HeliumPlots()
 	color++;
 	color++;
 	if(color == 5) color++;
-/*
+
 	Solenoid_calib_single(
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_102426.txt",	//Shunt resistor calibration file
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_183353.txt",	//Measurement File
@@ -183,7 +184,7 @@ int HeliumPlots()
 		*c00,
 		*leg,
 		color);	//Title of plot
-*/
+
 	color++;
 	if(color == 5) color++;
 
@@ -239,7 +240,7 @@ int HeliumPlots()
 	color++;
 	if(color == 5) color++;
 
-/*
+
 	Solenoid_calib_single(
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_102426.txt",	//Shunt resistor calibration file
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_155007.txt",	//Measurement File
@@ -248,7 +249,7 @@ int HeliumPlots()
 		*c00,
 		*leg,
 		color);	//Title of plot
-*/
+
 	color++;
 	if(color == 5) color++;
 /*
@@ -295,8 +296,7 @@ int HeliumPlots()
 		*leg,
 		1);	//Title of plot
 */
-	c00->SetFixedAspectRatio();
-	leg->Draw();
+	if(draw_legend) leg->Draw();
 
 	return 0;
 }

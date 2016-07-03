@@ -3,14 +3,11 @@
 int n = 1;
 bool onetoone_leg = false;
 
-int LayerExtrapolation_v2()
+int LayerExtrapolation_v3_Helium()
 {
 
-		std::string ten_file_txt = "/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_102426.txt";	//Room temperature calibration 
-//		std::string ten_file_txt = "/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_102426.txt";	//Room temperature calibration 
-		std::string ten_file1_txt = "/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_222417.txt";	//Before baking
-//		std::string ten_file1_txt = "/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_114940.txt";	//Before baking
-		std::string title = "1 Layer YBCO (lN2)";
+		std::string ten_file1_txt = "/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/HeliumTest_2016_06_29/HeliumScan1_2016_06_29.txt.txt";	//Before baking
+		std::string title = "1 Layer YBCO (lHe)";
 		TCanvas *c00 = new TCanvas();
 		leg = new TLegend(0.2,0.9,0.7,0.75);
 			leg->SetBorderSize(1);
@@ -18,34 +15,25 @@ int LayerExtrapolation_v2()
 //Measurement Files
 
 
-        std::ifstream ten_file(ten_file_txt.c_str()); //first run no cooling
 	std::ifstream ten_file1(ten_file1_txt.c_str()); //second run with cooling
 
         std::string str;
         double ti, xi, yi;
-        vector<double> ten_time, ten_field, ten_voltage;
+	int time = 0;
         vector<double> ten_time_1, ten_field_1, ten_voltage_1;
-
-        while (std::getline(ten_file, str))
-        {
-                if(ten_file >> ti >> xi >> yi)
-                {
-                        ten_time.push_back(ti); //Time
-                        ten_voltage.push_back(TMath::Abs(xi)); //Current in mA -> Voltage in mV
-                        ten_field.push_back(TMath::Abs(yi)); //Magnetic Field (mT)
-                }
-        }
 
         while (std::getline(ten_file1, str))
         {
-                if(ten_file1 >> ti >> xi >> yi)
+                if(ten_file1 >> xi >> yi)
                 {
-                        ten_time_1.push_back(ti); //Time
+			if (time > 1227) break;
+                        ten_time_1.push_back(time); //Time
+				time++;
                         ten_voltage_1.push_back(TMath::Abs(xi)); //Current in mA -> Voltage in mV
                         ten_field_1.push_back(TMath::Abs(yi)); //Magnetic Field (mT)
                 }
         }
-
+/*
 	TCanvas *c1 = new TCanvas();
         gr1 = new TGraph(ten_time.size(),&(ten_voltage[0]),&(ten_field[0]));
                 gr1->Draw("AP");
@@ -61,7 +49,7 @@ int LayerExtrapolation_v2()
                 f1->SetRange(0,300);
                 f1->Draw("SAME");
         c1->Update();
-
+*/
         gr2 = new TGraph(ten_time_1.size(),&(ten_voltage_1[0]),&(ten_field_1[0]));
                 gr2->Draw("p SAME");
                 gr2->GetXaxis()->SetTitle("Voltage (mV)");
@@ -78,10 +66,10 @@ int LayerExtrapolation_v2()
 */        c1->Update();
 
         leg3 = new TLegend(0.2,0.8,0.48,0.9);
-                leg3->AddEntry(gr1,"Room Temperature","p");
+//                leg3->AddEntry(gr1,"Room Temperature","p");
                 leg3->AddEntry(gr2,"Cryo","p");
         leg3->Draw();
-
+/*
 	TCanvas *c2 = new TCanvas();
 	gr4 = new TGraph(ten_time.size(),&(ten_voltage[0]),&(ten_field[0]));
                 gr4->Draw("AP");
@@ -94,12 +82,12 @@ int LayerExtrapolation_v2()
                 f4->SetRange(0,2000);
                 f4->Draw("SAME");
 	c2->Update();
-
+*/
         vector<double> ten_voltageTOfield_1;
 
         for(int i = 0; i < ten_voltage_1.size(); i++)
         {
-                      ten_voltageTOfield_1.push_back(f4->Eval(ten_voltage_1[i]));
+                      ten_voltageTOfield_1.push_back(58.8*ten_voltage_1[i]);
 	}
 
 
@@ -113,10 +101,10 @@ int LayerExtrapolation_v2()
 		{
 			gr12->Draw("P SAME");
 		}
-                gr12->GetXaxis()->SetTitle("Applied Field (mT)");
-                gr12->GetXaxis()->SetRangeUser(0,100);
-                gr12->GetYaxis()->SetTitle("Magnetic Field within Shield (mT)");
-                gr12->GetYaxis()->SetRangeUser(0,100);
+                gr12->GetXaxis()->SetTitle("B_{o} (mT)");
+                gr12->GetXaxis()->SetRangeUser(0,400);
+                gr12->GetYaxis()->SetTitle("B_{i} (mT)");
+                gr12->GetYaxis()->SetRangeUser(0,200);
                 gr12->SetTitle(title.c_str());
 		if(n == 5) n++; //I dont like yellow on graphs
                 gr12->SetMarkerColor(n);
@@ -138,8 +126,8 @@ int LayerExtrapolation_v2()
 	std::string title_ext = title + " Linearly Extrapolated";
 
 
-	c1->Close();
-	c2->Close();
+//	c1->Close();
+//	c2->Close();
 //	c3->Close();
 
 //	gr2->SetMarkerColor(kRed);
@@ -156,7 +144,7 @@ int LayerExtrapolation_v2()
 	bool ding = true;
 	bool dong = true;
 	vector<double> appliedField_layer2, internalField_layer2;
-	for (int i = 0; i < 1020; i++)
+	for (int i = 0; i < 4010; i++)
 	{
 		appliedField_layer2.push_back(i/10.0);
 		for(int j = 0; j<ten_voltageTOfield_1.size();j++)
@@ -202,7 +190,7 @@ int LayerExtrapolation_v2()
 	ding = true;
 	dong = true;
 	vector<double> appliedField_layer3, internalField_layer3;
-	for (int i = 0; i < 1020; i++)
+	for (int i = 0; i < 4010; i++)
 	{
 		appliedField_layer3.push_back(i/10.0);
 		for(int j = 0; j<appliedField_layer2.size();j++)
@@ -241,19 +229,20 @@ int LayerExtrapolation_v2()
 			n++;
 	leg->AddEntry(gr14,"3 Layer Extrapolation","p");
 
+	c00->SetFixedAspectRatio();
 	c00->SetGridx();
 	c00->SetGridy();
 
 //Comparison with 2 layer data
 	TTree *t1 = new TTree();
-	t1->ReadFile("/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_155007.txt","time:voltage:field");
+	t1->ReadFile("/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/HeliumTest_2016_06_29/HeliumScan4_2016_06_29.txt","voltage:field");
 	t1->SetMarkerColor(n);
-	t1->Draw("-1*field:voltage*25.4","","SAME");
+	t1->Draw("-1*field:voltage*58.8","","SAME",1227,0);
 	leg->AddEntry(t1,"2 layer measured","p");
 	c00->Update();
 
 
-//	leg->Draw();
+	leg->Draw();
 
 
 	cout << "All done with: " << title << endl;
