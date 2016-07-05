@@ -4,16 +4,18 @@ int HeliumPlots()
 {
 	int color = 1;		//Integer corresponding to the color of the plot which is created. Each time a plot is created this integer should be iterated.
 	gStyle->SetOptStat(0);	//Prevents fit information from bring printed on the canvas.
-	std::string title = "YBCO vs. NbTi at N + He";	//Title of the canvas which will host all of the plots
-	bool plot_reference_line = false;	//If true will plot a 1:1 reference line on top of the plots.
+	std::string title = "";	//Title of the canvas which will host all of the plots
+	bool plot_reference_line = true;	//If true will plot a 1:1 reference line on top of the plots.
 	bool plot_rapheal = false; 		//If true will plot rapheals measurement on top of new measurement
 	bool draw_legend = true;		//If true will draw legend on plot
+	bool print_jpg = false;			//Prints canvas automatically to Plot.jpg
+	bool fixed_aspect_ratio = true;		//If true fixes output canvas aspect ratio to 1:1
 
 	double ymin, ymax, xmax, xmin;
 	ymin = 0;	//Defines the range of the canvas which will be printed in x and y
-	ymax = 200;
+	ymax = 125;
 	xmin = 0;
-	xmax = 400;
+	xmax = ymax;
 
 	//Create canvas to draw all of the plots on. This will be passed by reference into each function below.
 	TCanvas *c00 = new TCanvas();
@@ -31,7 +33,7 @@ int HeliumPlots()
 	//Further canvas settings (axis grid, aspect ratio, etc.)
 	c00->SetGridx(1);
 	c00->SetGridy(1);
-//	c00->SetFixedAspectRatio();
+	if(fixed_aspect_ratio) c00->SetFixedAspectRatio();
 
 	//Legend for the plots. This is passed by reference into each function called below which will add its own entry to it.
         leg = new TLegend(0.2,0.9,0.7,0.75);
@@ -90,7 +92,7 @@ int HeliumPlots()
 	if(color == 5) color++;
 
 
-/*
+
 	Solenoid_calib_single(
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_102426.txt",	//Shunt resistor calibration file
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_114940.txt",	//Measurement File
@@ -98,7 +100,7 @@ int HeliumPlots()
 		*c00,
 		*leg,
 		color);	//Title of plot
-*/
+
 	color++;
 	if(color == 5) color++;
 /*
@@ -119,8 +121,8 @@ int HeliumPlots()
 	Helium_calib_single(
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/HeliumTest_2016_06_29/HeliumScan2_2016_06_29.txt",
 //		"1 Layer YBCO (lHe) - Trial 2",
-		"YBCO: 22mm 1/2 Sheets #2 (lHe)",
-//		"22 mm YBCO 1/2 Sheets Helium (Trial 2)",
+//		"YBCO: 22mm 1/2 Sheets #2 (lHe)",
+		"22 mm YBCO 1/2 Sheets Helium (Trial 2)",
 		*c00,
 		*leg,
 		color);
@@ -141,13 +143,13 @@ int HeliumPlots()
 	if(color == 5) color++;
 
 
-/*
 
+/*
 	Helium_calib_single(
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/HeliumTest_2016_06_29/HeliumScan3_2016_06_29.txt",
 //		"NbTi Helium 1/2 Sheets",
-//		"NbTi: 22mm 1/2 Sheets",
-		"NbTi: 1 Layer",
+		"NbTi: 22mm 1/2 Sheets",
+//		"NbTi: 1 Layer",
 		*c00,
 		*leg,
 		color);
@@ -176,7 +178,7 @@ int HeliumPlots()
 	color++;
 	color++;
 	if(color == 5) color++;
-
+/*
 	Solenoid_calib_single(
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_102426.txt",	//Shunt resistor calibration file
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_183353.txt",	//Measurement File
@@ -184,7 +186,7 @@ int HeliumPlots()
 		*c00,
 		*leg,
 		color);	//Title of plot
-
+*/
 	color++;
 	if(color == 5) color++;
 
@@ -193,7 +195,7 @@ int HeliumPlots()
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_102426.txt",	//Shunt resistor calibration file
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_203307.txt",	//Measurement File
 //		"22mm Sheet #1 with Zip Ties",
-		"1-Layer Test 1",
+		"1-Layer Test 1 (Inner Layer, with zip ties)",
 		*c00,
 		*leg,
 		color);	//Title of plot
@@ -214,7 +216,7 @@ int HeliumPlots()
 	color++;
 	if(color == 5) color++;
 
-
+/*
 	Solenoid_calib_single(
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_102426.txt",	//Shunt resistor calibration file
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_222417.txt",	//Measurement File
@@ -225,7 +227,7 @@ int HeliumPlots()
 		*c00,
 		*leg,
 		2);	//Title of plot
-
+*/
 	color++;
 	if(color == 5) color++;
 /*
@@ -240,7 +242,7 @@ int HeliumPlots()
 	color++;
 	if(color == 5) color++;
 
-
+/*
 	Solenoid_calib_single(
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_102426.txt",	//Shunt resistor calibration file
 		"/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160701_155007.txt",	//Measurement File
@@ -249,7 +251,7 @@ int HeliumPlots()
 		*c00,
 		*leg,
 		color);	//Title of plot
-
+*/
 	color++;
 	if(color == 5) color++;
 /*
@@ -296,7 +298,19 @@ int HeliumPlots()
 		*leg,
 		1);	//Title of plot
 */
+
+	color++;
+
+	Solenoid_calib_single_python(
+		"./SummaryOf_DataFile_160701_114940.txt",	//Measurement File
+		"Python Measurement File",
+		*c00,
+		*leg,
+		color);	//Title of plot
+
+
 	if(draw_legend) leg->Draw();
+	if(print_jpg) c00->Print("Plot.jpg");
 
 	return 0;
 }

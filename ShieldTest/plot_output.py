@@ -107,7 +107,7 @@ fig.savefig(output_file_base+"_figure_2.png")
 
 # ======================================================================
 
-dI_threshold = 1e-5
+dI_threshold = 1e-6
 len_threshold = 20
 
 i0lst = []
