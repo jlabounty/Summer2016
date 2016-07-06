@@ -5,16 +5,30 @@ import sys
 # Update figure suplementary titles -- fig.suptitle -- whenever the file
 # used by np.genfromtxt (see the following line) is changed.
 
-input_file_path = "/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/"
-input_file = "DataFile_160701_114940.txt"
+input_file_path = sys.argv[1]
+input_file = sys.argv[2]
+#input_file_path = "/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/"
+#input_file = "DataFile_160706_132740.txt"	#SC sheet baking test #1 (3 minutes)
+#input_file = "DataFile_160701_155007.txt"	#2 layer kapton
+#input_file = "DataFile_160701_183353.txt`"	#2 layer solder test
 output_file_base = input_file[0:-4]
 
 t, I, B_int = np.genfromtxt(input_file_path+input_file, unpack=True)
 
+#Uncomment if field is negative
+if(sys.argv[3]):
+	B_int = -1*B_int
+
 #I *= 1e-3*50  # [1e-3 V/mV * 50 A/V]
-#B_ext = I * 0.77  # [0.77 mT/A]
+#B_ext = I *  0.839957  # [0.77 mT/A]
+
+#Helmholtz Calibration off Shunt Resistor
 I *= 1.0  # [1e-3 V/mV * 1 A/V]
-B_ext = I * 24.5  # [0.77 mT/A]
+B_ext = I *  0.839957  # [0.77 mT/A]
+
+#Solenoid Calibration off Shunt Resistor
+#I *= 1.0  # [1e-3 V/mV * 1 A/V]
+#B_ext = I * 24.5  # [0.77 mT/A]
 
 # Start zero offset index.
 i0 = 0
@@ -65,7 +79,7 @@ ax.set_aspect("equal")
 ax.set_xlim(right=120)
 ax.set_ylim(-1,120)
 
-fig.savefig(output_file_base+"_figure_1.png")
+#fig.savefig(output_file_base+"_figure_1.png")
 
 #=======================================================================
 
@@ -76,7 +90,7 @@ dI = np.gradient(I, t)
 a = 0
 
 # Stopping index
-b = 4330 
+b = 2486 
 
 # ======================================================================
 # Second Plot
@@ -103,12 +117,12 @@ axarr[3].plot(t[a:b], dI[a:b])
 
 axarr[-1].set_xlabel("Time [s]")
 
-fig.savefig(output_file_base+"_figure_2.png")
+#fig.savefig(output_file_base+"_figure_2.png")
 
 # ======================================================================
 
 dI_threshold = 1e-6
-len_threshold = 20
+len_threshold = 10
 
 i0lst = []
 i1lst = []
@@ -167,7 +181,7 @@ ax.legend(loc="best")
 # ======================================================================
 # Fourth Plot
 
-f = open('SummaryOf_'+input_file,'w')
+f = open('./SummaryFiles/SummaryOf_'+input_file,'w')
 for i in xrange(len(i0lst)):
     f.write(str(x[i]))
     f.write(" ")
@@ -221,5 +235,5 @@ ax.legend(loc='best')
 
 # ======================================================================
 
-plt.show()
+#plt.show()
 #plt.close()
