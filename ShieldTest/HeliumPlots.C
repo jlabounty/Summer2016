@@ -70,13 +70,15 @@ int HeliumPlots()
 	}
 
 /*
-	There are 3 functions located in the header file for this macro. Each one takes the following parameters as input:
+	There are a number of functions located in the header file for this macro. Each one takes the following parameters as input:
 		Calibration File 	---	Room temperature calibration measuremnt used to convert voltage -> applied field. The only function which doesnt require this is Helium_calib_single, as we have a fixed current -> field relationship for Xu Du's magnet.
 		Measurement File	---	A file containing the data for the measuremnt. For the Helium measurements this should be in the form "current field" and for all others in the form "time voltage field"
 		Title			---	A string which will be the entries label in the legend
 		TCanvas			---	The TCanvas (defailt *c00) which is passed by reference for the function to draw on
 		TLegend			---	The TLegend (defailt *leg) which is passed by reference for the function to draw on
 		color			---	An integer which specifies the color of the markers for that measurement
+
+	For the python calibration, the path of the directory where the python macros are stored is also necessary
 
 */
 
@@ -188,14 +190,19 @@ int HeliumPlots()
 		*leg,
 		color);	//Title of plot
 
-	Solenoid_calib_single_python(
-		"./SummaryOf_DataFile_160701_183353.txt",	//Measurement File
-		"YBCO: 2 Layer Solder Test (lN2)",
-		*c00,
-		*leg,
-		color);	//Title of plot
-
 */
+	Solenoid_calib_single_python(
+		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
+		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
+													//	in the same directory as the python script.
+		"DataFile_160701_183353.txt",								//File name for measurement file
+		"YBCO: 2 Layer Solder Test (lN2)",							//File name for legend
+		*c00,											//canvas to draw on
+		*leg,											//legend to draw on
+		3,											//color of plot marker / lines
+		"Solenoid",										//1 of solenoid calibration, 2 if helmholtz calibration
+		"False");										//Negate measurements of the field?
+
 	color++;
 	if(color == 5) color++;
 	color = 2;
@@ -210,16 +217,18 @@ int HeliumPlots()
 		*leg,
 		color);	//Title of plot
 
-
 	Solenoid_calib_single_python(
-		"./SummaryOf_DataFile_160701_203307.txt",	//Measurement File
-		"YBCO: 1 Layer (lN2)",
+		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
+		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
+													//	in the same directory as the python script.
+		"DataFile_160701_203307.txt",								//File name for measurement file
+		"YBCO: 1 Layer (lN2)",									//File name for legend
 //		"YBCO: 22mm 1/2 Sheets (lN2)",
 //		"22mm Sheet #1 with Zip Ties --- Trial 1/3",
 //		"Python Measurement File",
-		*c00,
-		*leg,
-		color);	//Title of plot
+		*c00,											//canvas to draw on
+		*leg,											//legend to draw on
+		color);											//color of plot marker / lines
 */
 	color++;
 	if(color == 5) color++;
@@ -272,14 +281,19 @@ int HeliumPlots()
 		*leg,
 		color);	//Title of plot
 
-	Solenoid_calib_single_python(
-		"./SummaryOf_DataFile_160701_155007.txt",	//Measurement File
-		"YBCO: 2 Layers (Kapton)",
-//		"2-Layer Test",
-		*c00,
-		*leg,
-		color);	//Title of plot
 */
+	Solenoid_calib_single_python(
+		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
+		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
+													//	in the same directory as the python script.
+		"DataFile_160701_155007.txt",								//File name for measurement file
+		"YBCO: 2 Layers (Kapton)",								//File name
+		*c00,											//canvas to draw on
+		*leg,											//legend to draw on
+		color,											//color of plot marker / lines
+		"Solenoid",										//1 of solenoid calibration, 2 if helmholtz calibration
+		"False");										//Negate measurements of the field?
+
 	color++;
 	if(color == 5) color++;
 /*
@@ -328,7 +342,7 @@ int HeliumPlots()
 */
 
 	color++;
-
+/*
         Solenoid_calib_single_old(
                 "/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160628_115402.txt",   //Room temperature calibration 
                 "/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160628_151902.txt",   //Before baking
@@ -336,16 +350,19 @@ int HeliumPlots()
                 *c00,
                 *leg,
                 2);     //Title of plot
-
+*/
 
 	Solenoid_calib_single_python(
-		"\"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/\"",	//File path of the datafile
-		"./SummaryFiles/",									//File path of the python output
-		"\"DataFile_160706_132740.txt\"",	//Measurement File				//Data file name
+		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
+		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
+													//	in the same directory as the python script.
+		"DataFile_160706_132740.txt",								//File name for measurement file
 		"YBCO Sheets: Baking Test 3 Minutes --- After",						//File name
 		*c00,											//canvas to draw on
 		*leg,											//legend to draw on
-		color);											//color of plot marker / lines
+		color,											//color of plot marker / lines
+		"Helmholtz",										//1 of solenoid calibration, 2 if helmholtz calibration
+		"True");										//Negate measurements of the field?
 	color++;
 
 

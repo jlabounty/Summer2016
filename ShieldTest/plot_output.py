@@ -16,19 +16,21 @@ output_file_base = input_file[0:-4]
 t, I, B_int = np.genfromtxt(input_file_path+input_file, unpack=True)
 
 #Uncomment if field is negative
-if(sys.argv[3]):
+if(sys.argv[3] == "True"):
 	B_int = -1*B_int
 
 #I *= 1e-3*50  # [1e-3 V/mV * 50 A/V]
 #B_ext = I *  0.839957  # [0.77 mT/A]
 
 #Helmholtz Calibration off Shunt Resistor
-I *= 1.0  # [1e-3 V/mV * 1 A/V]
-B_ext = I *  0.839957  # [0.77 mT/A]
+if(sys.argv[4] == "Helmholtz"):
+	I *= 1.0  # [1e-3 V/mV * 1 A/V]
+	B_ext = I *  0.839957  # [0.77 mT/A]
 
 #Solenoid Calibration off Shunt Resistor
-#I *= 1.0  # [1e-3 V/mV * 1 A/V]
-#B_ext = I * 24.5  # [0.77 mT/A]
+if(sys.argv[4] == "Solenoid"):
+	I *= 1.0  # [1e-3 V/mV * 1 A/V]
+	B_ext = I * 24.5  # [0.77 mT/A]
 
 # Start zero offset index.
 i0 = 0
