@@ -28,9 +28,13 @@ if(sys.argv[4] == "Helmholtz"):
 	B_ext = I *  0.839957  # [0.77 mT/A]
 
 #Solenoid Calibration off Shunt Resistor
-if(sys.argv[4] == "Solenoid"):
+elif(sys.argv[4] == "Solenoid"):
 	I *= 1.0  # [1e-3 V/mV * 1 A/V]
 	B_ext = I * 24.5  # [0.77 mT/A]
+else:
+	print "ERROR: Calibration not found"
+	I *= 0
+	B_ext = I *0
 
 # Start zero offset index.
 i0 = 0
@@ -92,7 +96,16 @@ dI = np.gradient(I, t)
 a = 0
 
 # Stopping index
-b = 2486 
+
+def file_len(fname):
+    with open(fname) as f:
+        for i, l in enumerate(f):
+            pass
+    return i + 1
+
+#Default is length of file.
+b = file_len(input_file_path+input_file)
+#b = 2486 
 
 # ======================================================================
 # Second Plot
