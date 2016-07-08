@@ -291,7 +291,7 @@ int HeliumPlots()
 		*c00,											//canvas to draw on
 		*leg,											//legend to draw on
 		color,											//color of plot marker / lines
-		"Solenoid",										//1 of solenoid calibration, 2 if helmholtz calibration
+		"Solenoid",										//Solenoid or helmholtz calibration?
 		"False");										//Negate measurements of the field?
 
 	color++;
