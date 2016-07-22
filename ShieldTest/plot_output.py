@@ -31,6 +31,11 @@ if(sys.argv[4] == "Helmholtz"):
 elif(sys.argv[4] == "Solenoid"):
 	I *= 1.0  # [1e-3 V/mV * 1 A/V]
 	B_ext = I * 24.5  # [0.77 mT/A]
+
+#Small (Blue) Dipole Calibration off Shunt Resistor
+elif(sys.argv[4] == "Dipole"):
+	I *= 1.0  # [1e-3 V/mV * 1 A/V]
+	B_ext = I * 19.6124  # [0.77 mT/A]
 else:
 	print "ERROR: Calibration not found"
 	I *= 0
@@ -40,10 +45,12 @@ else:
 i0 = 0
 
 # Stop zero offset index.
-i1 = 165
+#i1 = 165
 
 # Remove background field.
-B_int -= np.mean(B_int[i0:i1])
+#If you didn't zero your probe in ambient field, you can use this to save your ass.
+#B_int -= np.mean(B_int[i0:i1])
+
 # Negate B_int (to account for Hall sensor orienttion).
 B_int *= -1
 
@@ -82,8 +89,8 @@ ax.set_title("Internal vs. External Magnetic Field")
 ax.set_xlabel("Estimated External Field [mT]")
 ax.set_ylabel("Internal Field [mT]")
 ax.set_aspect("equal")
-ax.set_xlim(right=120)
-ax.set_ylim(-1,120)
+ax.set_xlim(right=300)
+ax.set_ylim(-1,300)
 
 #fig.savefig(output_file_base+"_figure_1.png")
 
@@ -104,8 +111,11 @@ def file_len(fname):
     return i + 1
 
 #Default is length of file.
-b = file_len(input_file_path+input_file)
-#b = 2486 
+if(int(sys.argv[5]) == 0):
+	b = file_len(input_file_path+input_file)
+else:
+	b = int(sys.argv[5])
+	print "       PYTHON: Only processing file to line: " + sys.argv[5]
 
 # ======================================================================
 # Second Plot
@@ -184,8 +194,8 @@ ax.set_title("Internal vs. External Magnetic Field")
 ax.set_xlabel("Estimated External Field [mT]")
 ax.set_ylabel("Internal Field [mT]")
 ax.set_aspect("equal")
-ax.set_xlim(right=120)
-ax.set_ylim(-2,120)
+ax.set_xlim(right=300)
+ax.set_ylim(-2,300)
 
 #fig.savefig(output_file_base+"_figure_3_without_legend.png")
 

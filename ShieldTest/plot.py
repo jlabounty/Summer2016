@@ -6,14 +6,17 @@ import numpy as np
 
 #input_file_path = "/home/anonymous/Dropbox/Magnetic_Cloaking_Device/LabVIEW/DATA_Gaussmeter/"
 input_file_path = "/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/"
-input_file = "DataFile_160309_214434.txt"
+input_file = "DataFile_160628_141147.txt"
 #input_file = "DataFile_160608_135913.txt"
 output_file_base = input_file[0:-4]
 
 t, I, B_int = np.genfromtxt(input_file_path+input_file, unpack=True)
 
-I *= 1e-3*50  # [1e-3 V/mV * 50 A/V]
-B_ext = I * 0.77  # [0.77 mT/A]
+I *= 1.0  # [1e-3 V/mV * 1 A/V]
+B_ext = I *  0.839957  # [0.77 mT/A]
+
+#I *= 1e-3*50  # [1e-3 V/mV * 50 A/V]
+#B_ext = I * 0.77  # [0.77 mT/A]
 
 # Start zero offset index.
 i0 = 0
@@ -75,7 +78,7 @@ dI = np.gradient(I, t)
 a = 0
 
 # Stopping index
-b = 2564  #5362  
+b = 1301 #number of lines in file 
 
 # ======================================================================
 # Second Plot
