@@ -4,21 +4,21 @@ int HeliumPlots()
 {
 	int color = 2;				//Integer corresponding to the color of the plot which is created.
 	gStyle->SetOptStat(0);			//Prevents fit information from bring printed on the canvas.
-	std::string title = "YBCO: 10 Layer 4.5\" Solder Test Comparison";			//Title of the canvas which will host all of the plots
+	std::string title = "YBCO: 45 Layer 4.5\" Solder Test Comparison";			//Title of the canvas which will host all of the plots
 	bool plot_reference_line = true;	//If true will plot a 1:1 reference line on top of the plots.
 	bool plot_rapheal = true; 		//If true will plot rapheals measurement on top of new measurement
 	bool draw_legend = true;		//If true will draw legend on plot
-	bool print_jpg = true;			//Prints canvas automatically to Plot.jpg
+	bool print_jpg = true;			//Prints canvas automatically to Plot_[title].jpg
 	bool fixed_aspect_ratio = false;		//If true fixes output canvas aspect ratio to 1:1
 
 	double ymin, ymax, xmax, xmin;
-	ymin = 0;	//Defines the range of the canvas which will be printed in x and y
-	ymax = 450;
+	ymin = -0.75;	//Defines the range of the canvas which will be printed in x and y
+	ymax = 700;
 	xmin = 0;
-	xmax = 450;
+	xmax = ymax;
 
 	//Create canvas to draw all of the plots on. This will be passed by reference into each function below.
-	TCanvas *c00 = new TCanvas("c00","Internal Field vs. Applied Field",750,750);
+	TCanvas *c00 = new TCanvas("c00",title.c_str(),750,750);	//Makes canvas large enough for png printing.
 	c00->cd();
 	//Use blank histogram to set the parameters of the canvas
         TH1F *blank = new TH1F("blank",title.c_str(),10,xmin,xmax);
@@ -55,6 +55,9 @@ int HeliumPlots()
 	//If the bool above is true this will plot rapheals measurements on top of the current plot
 	if(plot_rapheal)
 	{
+		std::string title_rapheal = "2015 1-Layer (Helmholtz)";
+		cout << "*******************************************************" << endl << "Beginning: " << title_rapheal << endl;
+		//Plots rapheals 1-layer measurement from his thesis
 		TTree *t = new TTree();
 		t->ReadFile("./DataFiles/1layer_wide_sc_fit_results.txt","Bo:w:Bi:r:t:y:u:i:o:p");
 		TCanvas *ctemp = new TCanvas();
@@ -64,7 +67,6 @@ int HeliumPlots()
 		for ( int i = 0; i < t->GetEntries(); i++ )
 			r->SetPointError(i,0, t->GetV3()[i]);
 		r->Draw("Pl same");
-		std::string title_rapheal = "1-Layer (Rapheal)";
 		leg->AddEntry(r,title_rapheal.c_str(),"pl");
 		ctemp->Close();
 		cout << "All done with: " << title_rapheal.c_str() << endl;
@@ -258,7 +260,7 @@ int HeliumPlots()
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
 		"DataFile_160720_172022.txt",								//File name for measurement file
-		"10-Layer Solder Prototype",								//File name
+		"2016 10-Layer Solder (Dipole)",								//File name
 		*c00,											//canvas to draw on
 		*leg,											//legend to draw on
 		color,											//color of plot marker / lines
@@ -268,22 +270,74 @@ int HeliumPlots()
 
 	color++;
 
+	//Low fields
+
+/*
+	Solenoid_calib_single_python(
+		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
+		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
+													//	in the same directory as the python script.
+		"DataFile_160722_130339.txt",								//File name for measurement file
+		"2016 1-Layer (Dipole)",								//File name
+		*c00,											//canvas to draw on
+		*leg,											//legend to draw on
+		color,											//color of plot marker / lines
+		"SmallBlack",										//1 of solenoid calibration, 2 if helmholtz calibration
+		"True",											//Negate measurements of the field?
+		0);											//Line of file to stop python. 0 if full file.
+*/
+/*
 	Solenoid_calib_single_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
 		"DataFile_160722_110958.txt",								//File name for measurement file
-		"1-Layer With Overlap (6/21)",								//File name
+		"1-Layer With Overlap (6/22)",								//File name
 		*c00,											//canvas to draw on
 		*leg,											//legend to draw on
 		color,											//color of plot marker / lines
-		"Dipole",										//1 of solenoid calibration, 2 if helmholtz calibration
+		"DipoleNew",										//1 of solenoid calibration, 2 if helmholtz calibration
+		"True",											//Negate measurements of the field?
+		0);											//Line of file to stop python. 0 if full file.
+*/
+
+/*
+	Solenoid_calib_single_python(
+		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
+		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
+													//	in the same directory as the python script.
+		"DataFile_160722_173048.txt",								//File name for measurement file
+		"2016 45-Layer Solder Trial 2 (Dipole)",								//File name
+		*c00,											//canvas to draw on
+		*leg,											//legend to draw on
+		color,											//color of plot marker / lines
+		"DipoleNew",										//1 of solenoid calibration, 2 if helmholtz calibration
+		"True",											//Negate measurements of the field?
+		0);											//Line of file to stop python. 0 if full file.
+*/
+	color++;
+
+	Solenoid_calib_single_python(
+		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
+		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
+													//	in the same directory as the python script.
+		"DataFile_160722_184220.txt",								//File name for measurement file
+		"2016 45-Layer Solder (Dipole)",								//File name
+		*c00,											//canvas to draw on
+		*leg,											//legend to draw on
+		color,											//color of plot marker / lines
+		"DipoleNew",										//1 of solenoid calibration, 2 if helmholtz calibration
 		"True",											//Negate measurements of the field?
 		0);											//Line of file to stop python. 0 if full file.
 
 
 	if(draw_legend) leg->Draw();
-	if(print_jpg) c00->Print((title+".png").c_str());
+	if(print_jpg) 
+	{
+		c00->Print(("Plot_"+title+".png").c_str());
+		c00->Print(("Plot_"+title+".eps").c_str());
+		cout << "Image Created with title: Plot_" << title << ".png" << endl;
+	}
 
 	return 0;
 }

@@ -328,9 +328,9 @@ void Solenoid_calib_single_python(std::string file_path, std::string summary_fil
 
 	std::string python_input = "python plot_output.py \""+file_path+"\" \""+ten_file1_txt+"\" "+negate+" "+helm_or_sol+" "+file_end_str;
 
-	gSystem->Exec(python_input.c_str());
 	cout << "       Python Command Executed for: " << ten_file1_txt << endl;
 	cout << "       [If this plot looks odd, you may have to adjust the parameters in 'plot_output.py' directly]" << endl;
+	gSystem->Exec(python_input.c_str());
 
 	//Read the measurement summary file into vectors
 	std::ifstream ten_file1((summary_file_path+"SummaryOf_"+ten_file1_txt).c_str()); 	//Measurement File
