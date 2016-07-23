@@ -1,6 +1,6 @@
-#include "HeliumPlots.h"
+#include "ShieldPlot.h"
 
-int HeliumPlots()
+int ShieldPlot()
 {
 	int color = 2;				//Integer corresponding to the color of the plot which is created.
 	gStyle->SetOptStat(0);			//Prevents fit information from bring printed on the canvas.
@@ -8,7 +8,7 @@ int HeliumPlots()
 	bool plot_reference_line = true;	//If true will plot a 1:1 reference line on top of the plots.
 	bool plot_rapheal = true; 		//If true will plot rapheals measurement on top of new measurement
 	bool draw_legend = true;		//If true will draw legend on plot
-	bool print_jpg = true;			//Prints canvas automatically to Plot_[title].jpg
+	bool print_jpg = false;			//Prints canvas automatically to Plot_[title].jpg
 	bool fixed_aspect_ratio = false;		//If true fixes output canvas aspect ratio to 1:1
 
 	double ymin, ymax, xmax, xmin;
@@ -24,7 +24,8 @@ int HeliumPlots()
         TH1F *blank = new TH1F("blank",title.c_str(),10,xmin,xmax);
                 blank->GetYaxis()->SetRangeUser(ymin,ymax);
                 blank->GetXaxis()->SetTitle("B_{0} (mT)");
-                blank->GetYaxis()->SetTitle("B_{i} (mT)");
+                //blank->GetYaxis()->SetTitle("B_{0} - B_{i} (mT)");	//Shielding Factor y-axis
+                blank->GetYaxis()->SetTitle("B_{i} (mT)");		//Internal vs. External Field y-axis
                 blank->GetXaxis()->SetNdivisions(505);
                 blank->GetYaxis()->SetNdivisions(505);
                 blank->SetLineColor(0);
@@ -59,9 +60,10 @@ int HeliumPlots()
 		cout << "*******************************************************" << endl << "Beginning: " << title_rapheal << endl;
 		//Plots rapheals 1-layer measurement from his thesis
 		TTree *t = new TTree();
-		t->ReadFile("./DataFiles/1layer_wide_sc_fit_results.txt","Bo:w:Bi:r:t:y:u:i:o:p");
+		t->ReadFile("./DataFiles/1layer_wide_sc_fit_results.txt","Bo:w:Bi:Bi_err:t:y:u:i:o:p");
 		TCanvas *ctemp = new TCanvas();
-		t->Draw("Bi:Bo:r","","pl");
+//		t->Draw("Bo-Bi:Bo:Bi_err","","pl");
+		t->Draw("Bo:Bo:Bi_err","","pl");
 		c00->cd();
 		TGraphErrors *r = new TGraphErrors(t->GetEntries(),t->GetV2(),t->GetV1());
 		for ( int i = 0; i < t->GetEntries(); i++ )
@@ -86,7 +88,7 @@ int HeliumPlots()
 */
 
 /*
-	Solenoid_calib_single_python(
+	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
@@ -100,7 +102,7 @@ int HeliumPlots()
 	color++;
 */
 /*
-	Solenoid_calib_single_python(
+	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
@@ -117,7 +119,7 @@ int HeliumPlots()
 	color++;
 */
 /*
-	Solenoid_calib_single_python(
+	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
@@ -131,7 +133,7 @@ int HeliumPlots()
 */
 
 /*
-        Solenoid_calib_single_old(
+        shield_plot_old(
                 "/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160628_115402.txt",   //Room temperature calibration 
                 "/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160628_151902.txt",   //Before baking
                 "YBCO Sheets: Baking Test 3 Minutes --- Before",
@@ -140,7 +142,7 @@ int HeliumPlots()
                 color);     //Title of plot
 
 
-	Solenoid_calib_single_python(
+	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
@@ -154,7 +156,7 @@ int HeliumPlots()
 	color++;
 
 
-        Solenoid_calib_single_old(
+        shield_plot_old(
                 "/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160628_122150.txt",   //Room temperature calibration 
                 "/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160628_131013.txt",   //Before baking
                 "YBCO Sheets: Baking Test 5 Minutes --- Before",
@@ -162,7 +164,7 @@ int HeliumPlots()
                 *leg,
                 color);     //Title of plot
 
-	Solenoid_calib_single_python(
+	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
@@ -176,7 +178,7 @@ int HeliumPlots()
 	color++;
 
 
-        Solenoid_calib_single_old(
+        shield_plot_old(
                 "/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160628_134420.txt",   //Room temperature calibration 
                 "/home/josh/Dropbox/Stony\ Brook\ Research\ Team\ Folder/LabVIEW/DATA_Gaussmeter/DataFile_160628_141147.txt",   //Before baking
                 "YBCO Sheets: Baking Test 7 Minutes --- Before",
@@ -185,7 +187,7 @@ int HeliumPlots()
                 color);     //Title of plot
 
 
-	Solenoid_calib_single_python(
+	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
@@ -199,7 +201,7 @@ int HeliumPlots()
 	color++;
 */
 /*
-	Solenoid_calib_single_python(
+	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
@@ -213,7 +215,7 @@ int HeliumPlots()
 	color++;
 
 
-	Solenoid_calib_single_python(
+	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
@@ -227,7 +229,7 @@ int HeliumPlots()
 	color++;
 
 
-	Solenoid_calib_single_python(
+	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
@@ -242,7 +244,7 @@ int HeliumPlots()
 	color++;
 
 
-	Solenoid_calib_single_python(
+	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
@@ -255,7 +257,7 @@ int HeliumPlots()
 		"False");										//Negate measurements of the field?
 */
 
-	Solenoid_calib_single_python(
+	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
@@ -273,7 +275,7 @@ int HeliumPlots()
 	//Low fields
 
 /*
-	Solenoid_calib_single_python(
+	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
@@ -287,7 +289,7 @@ int HeliumPlots()
 		0);											//Line of file to stop python. 0 if full file.
 */
 /*
-	Solenoid_calib_single_python(
+	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
@@ -302,7 +304,7 @@ int HeliumPlots()
 */
 
 /*
-	Solenoid_calib_single_python(
+	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
@@ -317,7 +319,7 @@ int HeliumPlots()
 */
 	color++;
 
-	Solenoid_calib_single_python(
+	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
@@ -334,8 +336,8 @@ int HeliumPlots()
 	if(draw_legend) leg->Draw();
 	if(print_jpg) 
 	{
-		c00->Print(("Plot_"+title+".png").c_str());
-		c00->Print(("Plot_"+title+".eps").c_str());
+		c00->Print(("./plots/Plot_"+title+".png").c_str());
+		c00->Print(("./plots/Plot_"+title+".eps").c_str());
 		cout << "Image Created with title: Plot_" << title << ".png" << endl;
 	}
 
