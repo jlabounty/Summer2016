@@ -1,4 +1,5 @@
-#include "ShieldPlot.h"
+#include "./headers/ShieldPlot.h"
+#include "./headers/exist_test.h"
 
 int ShieldPlot()
 {
@@ -13,9 +14,9 @@ int ShieldPlot()
 
 	double ymin, ymax, xmax, xmin;
 	ymin = -0.75;	//Defines the range of the canvas which will be printed in x and y
-	ymax = 700;
+	ymax = 1;
 	xmin = 0;
-	xmax = ymax;
+	xmax = 700;
 
 	//Create canvas to draw all of the plots on. This will be passed by reference into each function below.
 	TCanvas *c00 = new TCanvas("c00",title.c_str(),750,750);	//Makes canvas large enough for png printing.
@@ -257,6 +258,7 @@ int ShieldPlot()
 		"False");										//Negate measurements of the field?
 */
 
+
 	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
@@ -272,8 +274,35 @@ int ShieldPlot()
 
 	color++;
 
-	//Low fields
+/*
+	shield_plot_python(
+		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
+		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
+													//	in the same directory as the python script.
+		"DataFile_160725_115454.txt",								//File name for measurement file
+		"2016 10-Layer Solder Low Fields (Dipole)",								//File name
+		*c00,											//canvas to draw on
+		*leg,											//legend to draw on
+		color,											//color of plot marker / lines
+		"SmallBlack",										//1 of solenoid calibration, 2 if helmholtz calibration
+		"True",											//Negate measurements of the field?
+		0);											//Line of file to stop python. 0 if full file.
 
+
+	shield_plot_python(
+		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
+		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
+													//	in the same directory as the python script.
+		"DataFile_160725_120847.txt",								//File name for measurement file
+		"2016 10-Layer Solder High Fields (Dipole)",								//File name
+		*c00,											//canvas to draw on
+		*leg,											//legend to draw on
+		color,											//color of plot marker / lines
+		"DipoleNew",										//1 of solenoid calibration, 2 if helmholtz calibration
+		"True",											//Negate measurements of the field?
+		0);											//Line of file to stop python. 0 if full file.
+
+*/
 /*
 	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
@@ -318,13 +347,43 @@ int ShieldPlot()
 		0);											//Line of file to stop python. 0 if full file.
 */
 	color++;
-
 	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
 		"DataFile_160722_184220.txt",								//File name for measurement file
 		"2016 45-Layer Solder (Dipole)",								//File name
+		*c00,											//canvas to draw on
+		*leg,											//legend to draw on
+		color,											//color of plot marker / lines
+		"DipoleNew",										//1 of solenoid calibration, 2 if helmholtz calibration
+		"True",											//Negate measurements of the field?
+		0);											//Line of file to stop python. 0 if full file.
+
+color++;
+color++;
+/*
+
+	shield_plot_python(
+		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
+		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
+													//	in the same directory as the python script.
+		"DataFile_160725_102449.txt",								//File name for measurement file
+		"2016 45-Layer Solder Low Fields (Dipole)",								//File name
+		*c00,											//canvas to draw on
+		*leg,											//legend to draw on
+		color,											//color of plot marker / lines
+		"SmallBlack",										//1 of solenoid calibration, 2 if helmholtz calibration
+		"True",											//Negate measurements of the field?
+		0);											//Line of file to stop python. 0 if full file.
+
+*/
+	shield_plot_python(
+		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
+		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
+													//	in the same directory as the python script.
+		"DataFile_160725_151350.txt",								//File name for measurement file
+		"2016 45-Layer Solder High Fields (Mk. 2 --- Dipole)",								//File name
 		*c00,											//canvas to draw on
 		*leg,											//legend to draw on
 		color,											//color of plot marker / lines
