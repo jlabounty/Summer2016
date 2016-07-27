@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+import os.path
 
 # Update figure suplementary titles -- fig.suptitle -- whenever the file
 # used by np.genfromtxt (see the following line) is changed.
@@ -12,6 +13,12 @@ input_file = sys.argv[2]
 #input_file = "DataFile_160701_155007.txt"	#2 layer kapton
 #input_file = "DataFile_160701_183353.txt`"	#2 layer solder test
 output_file_base = input_file[0:-4]
+
+if(os.path.isfile(input_file_path+input_file)):
+	print "       PYTHON: Input file found"
+else:
+	print "       PYTHON: Input file NOT found. Aborting."
+	sys.exit()
 
 t, I, B_int = np.genfromtxt(input_file_path+input_file, unpack=True)
 
@@ -36,6 +43,12 @@ elif(sys.argv[4] == "Solenoid"):
 elif(sys.argv[4] == "Dipole"):
 	I *= 1.0  # [1e-3 V/mV * 1 A/V]
 	B_ext = I * 19.6124  # [0.77 mT/A]
+elif(sys.argv[4] == "DipoleNew"):
+	I *= 1.0  # [1e-3 V/mV * 1 A/V]
+	B_ext = I * 20.3989  # [0.77 mT/A]
+elif(sys.argv[4] == "SmallBlack"):
+	I *= 1.0  # [1e-3 V/mV * 1 A/V]
+	B_ext = I * 19.5361  # [0.77 mT/A]
 else:
 	print "ERROR: Calibration not found"
 	I *= 0
@@ -45,11 +58,11 @@ else:
 i0 = 0
 
 # Stop zero offset index.
-#i1 = 165
+i1 = 10
 
 # Remove background field.
 #If you didn't zero your probe in ambient field, you can use this to save your ass.
-#B_int -= np.mean(B_int[i0:i1])
+B_int -= np.mean(B_int[i0:i1])
 
 # Negate B_int (to account for Hall sensor orienttion).
 B_int *= -1
@@ -146,7 +159,7 @@ axarr[-1].set_xlabel("Time [s]")
 
 # ======================================================================
 
-dI_threshold = 1e-6
+dI_threshold = 5e-6
 len_threshold = 10
 
 i0lst = []
