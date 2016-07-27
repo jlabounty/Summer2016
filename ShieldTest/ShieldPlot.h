@@ -9,6 +9,17 @@
 
 */
 
+#include <sys/stat.h>
+#include <unistd.h>
+#include <string>
+
+//Simple test to check whether file exists before reading in, to avoid crashing.
+bool exists_test(const std::string& name) 
+{
+	struct stat buffer;   
+	return (stat (name.c_str(), &buffer) == 0); 
+}
+
 //Various variables which need to be shared between these functions.
 int n=2;
 bool onetoone_leg = true;
@@ -332,6 +343,17 @@ void shield_plot_python(std::string file_path, std::string summary_file_path, st
 	cout << "       [If this plot looks odd, you may have to adjust the parameters in 'plot_output.py' directly]" << endl;
 	gSystem->Exec(python_input.c_str());
 
+
+	if(exists_test((summary_file_path+"SummaryOf_"+ten_file1_txt).c_str()))
+	{
+		cout << "       Summary File Found. Proceeding with Plot" << endl;
+	} 
+	else 
+	{
+		cerr << "ERROR: Summary File for " << ten_file1_txt << " not found. Aborting." << endl;
+		return -1;
+	}   
+	
 	//Read the measurement summary file into vectors
 	std::ifstream ten_file1((summary_file_path+"SummaryOf_"+ten_file1_txt).c_str()); 	//Measurement File
 
@@ -412,7 +434,16 @@ void shield_plot_python_existing(std::string file_path, std::string summary_file
 	cout << "Python Command NOT Executed for: " << ten_file1_txt << endl;
 	cout << "Reading Existing File." << endl;
 
-	//Read the measurement summary file into vectors
+	//Read the measurement summary file into vectors if it exists
+	if(exists_test((summary_file_path+"SummaryOf_"+ten_file1_txt).c_str()))
+	{
+		cout << "       Summary File Found. Proceeding with Plot" << endl;
+	} 
+	else 
+	{
+		cerr << "ERROR: Summary File for " << ten_file1_txt << " not found. Aborting." << endl;
+		return -1;
+	}   
 	std::ifstream ten_file1((summary_file_path+"SummaryOf_"+ten_file1_txt).c_str()); 	//Measurement File
 
         std::string str;
@@ -497,7 +528,16 @@ void shield_factor_plot_python(std::string file_path, std::string summary_file_p
 	cout << "       [If this plot looks odd, you may have to adjust the parameters in 'plot_output.py' directly]" << endl;
 	gSystem->Exec(python_input.c_str());
 
-	//Read the measurement summary file into vectors
+	//Read the measurement summary file into vectors if it exists
+	if(exists_test((summary_file_path+"SummaryOf_"+ten_file1_txt).c_str()))
+	{
+		cout << "       Summary File Found. Proceeding with Plot" << endl;
+	} 
+	else 
+	{
+		cerr << "ERROR: Summary File for " << ten_file1_txt << " not found. Aborting." << endl;
+		return -1;
+	}   
 	std::ifstream ten_file1((summary_file_path+"SummaryOf_"+ten_file1_txt).c_str()); 	//Measurement File
 
         std::string str;
@@ -578,6 +618,15 @@ int Helium_calib_single(std::string helium_file, std::string title, TCanvas &c00
 	cout << "*******************************************************" << endl << "Beginning: " << title << endl;
 	//Open the measurement file. Read the two columns of data into two vectors.
 	TTree *t1 = new TTree();
+	if(exists_test((helium_file).c_str()))
+	{
+		cout << "       Summary File Found. Proceeding with Plot" << endl;
+	} 
+	else 
+	{
+		cerr << "ERROR: Data File for " << helium_file << " not found. Aborting." << endl;
+		return -1;
+	}   
 	t1->ReadFile(helium_file.c_str(),"amperage:field");
 
 	//The vectors have to be drawn before they can be read in. Temporary canvas created for this purpose and then closed immedietly after.
