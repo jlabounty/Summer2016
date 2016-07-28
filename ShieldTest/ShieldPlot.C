@@ -1,4 +1,5 @@
 #include "./headers/ShieldPlot.h"
+#include "./headers/DipoleField_ShieldPlot.h"
 #include "./headers/exist_test.h"
 
 int ShieldPlot()
@@ -6,17 +7,17 @@ int ShieldPlot()
 	int color = 2;				//Integer corresponding to the color of the plot which is created.
 	gStyle->SetOptStat(0);			//Prevents fit information from bring printed on the canvas.
 	std::string title = "YBCO: 45 Layer 4.5\" Solder Test Comparison";			//Title of the canvas which will host all of the plots
-	bool plot_reference_line = true;	//If true will plot a 1:1 reference line on top of the plots.
-	bool plot_rapheal = true; 		//If true will plot rapheals measurement on top of new measurement
+	bool plot_reference_line = false;	//If true will plot a 1:1 reference line on top of the plots.
+	bool plot_rapheal = false; 		//If true will plot rapheals measurement on top of new measurement
 	bool draw_legend = true;		//If true will draw legend on plot
 	bool print_jpg = false;			//Prints canvas automatically to Plot_[title].jpg
 	bool fixed_aspect_ratio = false;		//If true fixes output canvas aspect ratio to 1:1
 
 	double ymin, ymax, xmax, xmin;
 	ymin = -0.75;	//Defines the range of the canvas which will be printed in x and y
-	ymax = 1;
+	ymax = 200;
 	xmin = 0;
-	xmax = 700;
+	xmax = 1000;
 
 	//Create canvas to draw all of the plots on. This will be passed by reference into each function below.
 	TCanvas *c00 = new TCanvas("c00",title.c_str(),750,750);	//Makes canvas large enough for png printing.
@@ -258,19 +259,37 @@ int ShieldPlot()
 		"False");										//Negate measurements of the field?
 */
 
+	onetoone_DipoleField(*c00, *leg, 0.00, 24.50);
 
 	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
 		"DataFile_160720_172022.txt",								//File name for measurement file
-		"2016 10-Layer Solder (Dipole)",								//File name
+		"2016 10-Layer Solder (Dipole Center)",								//File name
 		*c00,											//canvas to draw on
 		*leg,											//legend to draw on
 		color,											//color of plot marker / lines
 		"Dipole",										//1 of solenoid calibration, 2 if helmholtz calibration
 		"True",											//Negate measurements of the field?
 		1962);											//Line of file to stop python. 0 if full file.
+
+	color++;
+
+	DipoleFieldShieldPlot(
+		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
+		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
+													//	in the same directory as the python script.
+		"DataFile_160720_172022.txt",								//File name for measurement file
+		"2016 10-Layer Solder (Dipole Corrected)",								//File name
+		*c00,											//canvas to draw on
+		*leg,											//legend to draw on
+		color,											//color of plot marker / lines
+		"Dipole",										//1 of solenoid calibration, 2 if helmholtz calibration
+		"True",											//Negate measurements of the field?
+		1962,											//Line of file to stop python. 0 if full file.
+		(24.50 - 1.04),										//Inner Diameter of Cylinder in mm
+		24.50);											//Outer Diameter of Cylinder in mm
 
 	color++;
 
@@ -346,13 +365,12 @@ int ShieldPlot()
 		"True",											//Negate measurements of the field?
 		0);											//Line of file to stop python. 0 if full file.
 */
-	color++;
 	shield_plot_python(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
 		"DataFile_160722_184220.txt",								//File name for measurement file
-		"2016 45-Layer Solder (Dipole)",								//File name
+		"2016 45-Layer Solder (Dipole Center)",								//File name
 		*c00,											//canvas to draw on
 		*leg,											//legend to draw on
 		color,											//color of plot marker / lines
@@ -360,36 +378,25 @@ int ShieldPlot()
 		"True",											//Negate measurements of the field?
 		0);											//Line of file to stop python. 0 if full file.
 
-color++;
-color++;
-/*
+	color++;
+	color++;
 
-	shield_plot_python(
+	DipoleFieldShieldPlot(
 		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
 		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
 													//	in the same directory as the python script.
-		"DataFile_160725_102449.txt",								//File name for measurement file
-		"2016 45-Layer Solder Low Fields (Dipole)",								//File name
-		*c00,											//canvas to draw on
-		*leg,											//legend to draw on
-		color,											//color of plot marker / lines
-		"SmallBlack",										//1 of solenoid calibration, 2 if helmholtz calibration
-		"True",											//Negate measurements of the field?
-		0);											//Line of file to stop python. 0 if full file.
-
-*/
-	shield_plot_python(
-		"/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/",		//File path of the datafile
-		"./SummaryFiles/",									//File path of the python output, should be a folder SummaryFiles 
-													//	in the same directory as the python script.
-		"DataFile_160725_151350.txt",								//File name for measurement file
-		"2016 45-Layer Solder High Fields (Mk. 2 --- Dipole)",								//File name
+		"DataFile_160722_184220.txt",								//File name for measurement file
+		"2016 45-Layer Solder (Dipole Corrected)",								//File name
 		*c00,											//canvas to draw on
 		*leg,											//legend to draw on
 		color,											//color of plot marker / lines
 		"DipoleNew",										//1 of solenoid calibration, 2 if helmholtz calibration
 		"True",											//Negate measurements of the field?
-		0);											//Line of file to stop python. 0 if full file.
+		0,											//Line of file to stop python. 0 if full file.
+		13.02,											//Inner Diameter of Cylinder in mm
+		24.50);											//Outer Diameter of Cylinder in mm
+
+color++;
 
 
 	if(draw_legend) leg->Draw();

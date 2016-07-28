@@ -1,6 +1,13 @@
 #include "exist_test.h"
+#include "shade.h"
 
-double GetFieldMapFactor()
+double mm_to_inches(double mm)
+{
+	return (mm*0.03937); //1 mm = 0.03937 inches
+}
+
+
+double GetFieldMapFactor(double diameter_mm)
 {
 
 	cout << "       Finding Field Map Factor" << endl;
@@ -36,19 +43,20 @@ double GetFieldMapFactor()
         t->Draw("(field_scale*field)-field_offset:(z_scale*z)-z_offset");
 
         TF1 *fit1 = new TF1("fit1","gaus");
-        Graph->Fit("fit1");
+        Graph->Fit("fit1","Q");
 
-        cout << "       The Field Map Factor for a 1\" Cylinder is: " << fit1->Eval(fit1->GetParameter(1) - 25.4/2.0) / fit1->Eval(fit1->GetParameter(1)) << endl;
+	FieldMapFactor = fit1->Eval(fit1->GetParameter(1) - diameter_mm/2.0) / fit1->Eval(fit1->GetParameter(1));
+        cout << "              The Field Map Factor for a " << mm_to_inches(diameter_mm) <<"\" Cylinder is: " << FieldMapFactor << endl;
 
-	FieldMapFactor = fit1->Eval(fit1->GetParameter(1) - 25.4/2.0) / fit1->Eval(fit1->GetParameter(1));
 	ctemp->Close();
 	return FieldMapFactor;
 
 }
 
-void DipoleFieldShieldPlot(std::string file_path, std::string summary_file_path, std::string ten_file1_txt, std::string title, TCanvas &c00, TLegend &leg, int color, std::string helm_or_sol, std::string negate, int file_end)
+int DipoleFieldShieldPlot(std::string file_path, std::string summary_file_path, std::string ten_file1_txt, std::string title, TCanvas &c00, TLegend &leg, int color, std::string helm_or_sol, std::string negate, int file_end, double inner_diameter_mm, double outer_diameter_mm)
 {
 	cout << "*******************************************************" << endl << "Beginning: " << title  << " WITH correction for dipole field" << endl;
+	cout << "       Cylinder Outer/Inner Diameter (mm): " << outer_diameter_mm << "/" << inner_diameter_mm << endl;
 //Measurement Files
 
 	std::string file_end_str = Form("%d",file_end);
@@ -76,16 +84,18 @@ void DipoleFieldShieldPlot(std::string file_path, std::string summary_file_path,
         std::string str;
         double AppliedField_i, AppliedField_err_i, InternalField_i, InternalField_err_i;
         vector<double> AppliedField, AppliedField_err, AppliedField_Noerr, InternalField, InternalField_err;
-        vector<double> AppliedField_DipoleCorrection;
+        vector<double> AppliedField_DipoleCorrection_Outer, AppliedField_DipoleCorrection_Inner;
 
-	double fieldAtEdge_vs_fieldAtCenter = GetFieldMapFactor();
+	double fieldAtEdge_vs_fieldAtCenter = GetFieldMapFactor(outer_diameter_mm);
+	double fieldAtInner_vs_fieldAtCenter = GetFieldMapFactor(inner_diameter_mm);
 
         while (std::getline(ten_file1, str))
         {
                 if(ten_file1 >> AppliedField_i >> AppliedField_err_i >> InternalField_i >> InternalField_err_i)
                 {
                         AppliedField.push_back(AppliedField_i); 			//Calculated Applied Field
-                        AppliedField_DipoleCorrection.push_back(AppliedField_i / fieldAtEdge_vs_fieldAtCenter); 			//Calculated Applied Field
+                        AppliedField_DipoleCorrection_Outer.push_back(AppliedField_i / fieldAtEdge_vs_fieldAtCenter); 			//Calculated Applied Field
+                        AppliedField_DipoleCorrection_Inner.push_back(AppliedField_i / fieldAtInner_vs_fieldAtCenter); 			//Calculated Applied Field
 			if(AppliedField_err_i > 0.01)
 			{
                         	AppliedField_err.push_back(AppliedField_err_i); 		//Error in applied field
@@ -103,24 +113,24 @@ void DipoleFieldShieldPlot(std::string file_path, std::string summary_file_path,
 	//Plot the applied field vs. internal field on the canvas which was passed in by reference
 	c00.cd();
 	//This is the minimum shielding, using the field at the center of the superconductor
-	gr12 = new TGraphErrors(AppliedField.size(),&(AppliedField[0]),&(InternalField[0]),&(AppliedField_Noerr[0]),&(InternalField_err[0]));
+	gr12 = new TGraphErrors(AppliedField_DipoleCorrection_Inner.size(),&(AppliedField_DipoleCorrection_Inner[0]),&(InternalField[0]),&(AppliedField_Noerr[0]),&(InternalField_err[0]));
 		gr12->Draw("PL SAME");
                 gr12->SetMarkerColor(color);
                 gr12->SetLineColor(color);
 
 	//This is the maximum shielding, using the field at the edge of the superconductor (extrapolated from field map)
-	gr13 = new TGraphErrors(AppliedField_DipoleCorrection.size(),&(AppliedField_DipoleCorrection[0]),&(InternalField[0]),&(AppliedField_Noerr[0]),&(InternalField_err[0]));
+	gr13 = new TGraphErrors(AppliedField_DipoleCorrection_Outer.size(),&(AppliedField_DipoleCorrection_Outer[0]),&(InternalField[0]),&(AppliedField_Noerr[0]),&(InternalField_err[0]));
 		gr13->Draw("PL SAME");
                 gr13->SetMarkerColor(color);
                 gr13->SetLineColor(color);
 
 	//Draw a crosshatching between the two curves
-	int n = AppliedField_DipoleCorrection.size();
-	TGraph *grshade = new TGraph(2*AppliedField_DipoleCorrection.size());
+	int n = AppliedField_DipoleCorrection_Outer.size();
+	TGraph *grshade = new TGraph(2*AppliedField_DipoleCorrection_Outer.size());
 	for (int i=0;i<n;i++) 
 	{
-		grshade->SetPoint(i,AppliedField[i],InternalField[i]);
-		grshade->SetPoint(n+i,AppliedField_DipoleCorrection[n-i-1],InternalField[n-i-1]);
+		grshade->SetPoint(i,AppliedField_DipoleCorrection_Inner[i],InternalField[i]);
+		grshade->SetPoint(n+i,AppliedField_DipoleCorrection_Outer[n-i-1],InternalField[n-i-1]);
 	}
 	grshade->SetFillStyle(3013);
 	grshade->SetFillColor(color);
@@ -130,13 +140,33 @@ void DipoleFieldShieldPlot(std::string file_path, std::string summary_file_path,
 	
 	//Add the above plot(s) to the legend passed in by reference
 	leg.AddEntry(gr12,title.c_str(),"pl");
-	if(lin_extrap)
-	{
-		std::string title_ext = title + " Linearly Extrapolated";
-		leg.AddEntry(f7,title_ext.c_str(),"l");
-	}
 
 
 	cout << "All done with: " << title << endl;
+	return 0;
 }
 
+int onetoone_DipoleField(TCanvas &c, TLegend &leg, double inner_mm, double outer_mm)
+{
+	c.cd();
+
+	TF1 *onetoone = new TF1("onetoone","pol1",0,1500);
+		onetoone->SetParameter(0,0);
+		onetoone->SetParameter(1,GetFieldMapFactor(inner_mm));
+		onetoone->SetLineColor(kBlack);
+		onetoone->SetLineStyle(7);
+	onetoone->Draw("SAME");
+
+	TF1 *onetoone_corrected = new TF1("onetoone","pol1",0,1500);
+		onetoone_corrected->SetParameter(0,0);
+		onetoone_corrected->SetParameter(1,GetFieldMapFactor(outer_mm));
+		onetoone_corrected->SetLineColor(kBlack);
+		onetoone_corrected->SetLineStyle(7);
+	onetoone_corrected->Draw("SAME");
+
+	shade( c, *onetoone, *onetoone_corrected);
+
+	leg.AddEntry(onetoone,"1:1 Reference","l");	
+
+	return 0;
+}
