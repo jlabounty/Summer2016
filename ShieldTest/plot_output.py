@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import os.path
+#Requires pyroot to be installed
+import ROOT
 
 # Update figure suplementary titles -- fig.suptitle -- whenever the file
 # used by np.genfromtxt (see the following line) is changed.
@@ -9,9 +11,6 @@ import os.path
 input_file_path = sys.argv[1]
 input_file = sys.argv[2]
 #input_file_path = "/home/josh/Dropbox/Stony Brook Research Team Folder/LabVIEW/DATA_Gaussmeter/"
-#input_file = "DataFile_160706_132740.txt"	#SC sheet baking test #1 (3 minutes)
-#input_file = "DataFile_160701_155007.txt"	#2 layer kapton
-#input_file = "DataFile_160701_183353.txt`"	#2 layer solder test
 output_file_base = input_file[0:-4]
 
 if(os.path.isfile(input_file_path+input_file)):
@@ -193,14 +192,35 @@ y = []
 xerr = []
 yerr = []
 
+xroot = np.zeros(1, dtype=float)
+xerrroot = np.zeros(1, dtype=float)
+yroot = np.zeros(1, dtype=float)
+yerrroot = np.zeros(1, dtype=float)
+
+f = ROOT.TFile('./SummaryFiles/SummaryOf_'+input_file[:len(input_file)-3]+'root', "recreate")
+t = ROOT.TTree("t", "tree")
+t.Branch('Bo', xroot, 'Bo/D')
+t.Branch('BoErr', xerrroot, 'BoErr/D')
+t.Branch('Bi', yroot, 'Bi/D')
+t.Branch('BiErr', yerrroot, 'BiErr/D')
+
+
 for i in xrange(len(i0lst)):
     x += [np.mean(B_ext[i0lst[i]:i1lst[i]])]
+    xroot[0] = np.mean(B_ext[i0lst[i]:i1lst[i]])
     xerr += [np.std(B_ext[i0lst[i]:i1lst[i]])]
+    xerrroot[0] = np.std(B_ext[i0lst[i]:i1lst[i]])
     y += [np.mean(B_int[i0lst[i]:i1lst[i]])]
+    yroot[0] = np.mean(B_int[i0lst[i]:i1lst[i]])
     yerr += [np.std(B_int[i0lst[i]:i1lst[i]])]
+    yerrroot[0] = np.std(B_int[i0lst[i]:i1lst[i]])
     ax.plot(B_ext[i0lst[i]:i1lst[i]],
             B_int[i0lst[i]:i1lst[i]],
             label="B_ext ~ {:5.2f} mT".format(x[-1]))
+    t.Fill()
+
+f.Write()
+f.Close()
 
 fig.suptitle(suptitle)
 ax.set_title("Internal vs. External Magnetic Field")
