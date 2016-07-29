@@ -346,7 +346,6 @@ void shield_plot_python(std::string file_path, std::string summary_file_path, st
 	
 	//Read the measurement summary file into vectors
 	TFile f((summary_file_path+"SummaryOf_"+ten_file1_root).c_str());
-	t->Print();
 
 	TCanvas *ctemp = new TCanvas();
 	t->Draw("Bo:Bi:BoErr:BiErr");
@@ -421,7 +420,6 @@ void shield_plot_python_existing(std::string file_path, std::string summary_file
 
 	//Read the measurement summary file into vectors
 	TFile f((summary_file_path+"SummaryOf_"+ten_file1_root).c_str());
-	t->Print();
 
 	TCanvas *ctemp = new TCanvas();
 	t->Draw("Bo:Bi:BoErr:BiErr");

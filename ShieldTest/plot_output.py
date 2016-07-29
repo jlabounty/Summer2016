@@ -31,23 +31,27 @@ if(sys.argv[3] == "True"):
 #Helmholtz Calibration off Shunt Resistor
 if(sys.argv[4] == "Helmholtz"):
 	I *= 1.0  # [1e-3 V/mV * 1 A/V]
-	B_ext = I *  0.839957  # [0.77 mT/A]
+	calibration = 0.839957
+	B_ext = I * calibration
 
 #Solenoid Calibration off Shunt Resistor
 elif(sys.argv[4] == "Solenoid"):
 	I *= 1.0  # [1e-3 V/mV * 1 A/V]
-	B_ext = I * 24.5  # [0.77 mT/A]
-
+	calibration =  24.5  # [0.77 mT/A]
+	B_ext = I * calibration
 #Small (Blue) Dipole Calibration off Shunt Resistor
 elif(sys.argv[4] == "Dipole"):
 	I *= 1.0  # [1e-3 V/mV * 1 A/V]
-	B_ext = I * 19.6124  # [0.77 mT/A]
+	calibration = 19.6124  # [0.77 mT/A]
+	B_ext = I * calibration
 elif(sys.argv[4] == "DipoleNew"):
 	I *= 1.0  # [1e-3 V/mV * 1 A/V]
-	B_ext = I * 20.3989  # [0.77 mT/A]
+	calibration = 20.3989  # [0.77 mT/A]
+	B_ext = I * calibration
 elif(sys.argv[4] == "SmallBlack"):
 	I *= 1.0  # [1e-3 V/mV * 1 A/V]
-	B_ext = I * 19.5361  # [0.77 mT/A]
+	calibration =  19.5361  # [0.77 mT/A]
+	B_ext = I * calibration
 else:
 	print "ERROR: Calibration not found"
 	I *= 0
@@ -196,6 +200,10 @@ xroot = np.zeros(1, dtype=float)
 xerrroot = np.zeros(1, dtype=float)
 yroot = np.zeros(1, dtype=float)
 yerrroot = np.zeros(1, dtype=float)
+calibration_A_to_mT = np.zeros(1, dtype=float)
+current_average = np.zeros(1, dtype=float)
+current_err = np.zeros(1, dtype=float)
+
 
 f = ROOT.TFile('./SummaryFiles/SummaryOf_'+input_file[:len(input_file)-3]+'root', "recreate")
 t = ROOT.TTree("t", "tree")
@@ -203,6 +211,9 @@ t.Branch('Bo', xroot, 'Bo/D')
 t.Branch('BoErr', xerrroot, 'BoErr/D')
 t.Branch('Bi', yroot, 'Bi/D')
 t.Branch('BiErr', yerrroot, 'BiErr/D')
+t.Branch('calibrationFactor', calibration_A_to_mT, 'calibrationFactor/D')
+t.Branch('I', current_average, 'I/D')
+t.Branch('IErr', current_err, 'IErr/D')
 
 
 for i in xrange(len(i0lst)):
@@ -217,6 +228,9 @@ for i in xrange(len(i0lst)):
     ax.plot(B_ext[i0lst[i]:i1lst[i]],
             B_int[i0lst[i]:i1lst[i]],
             label="B_ext ~ {:5.2f} mT".format(x[-1]))
+    calibration_A_to_mT[0] = calibration
+    current_average[0] = (np.mean(B_ext[i0lst[i]:i1lst[i]]))/calibration
+    current_err[0] = (np.std(B_ext[i0lst[i]:i1lst[i]]))/calibration
     t.Fill()
 
 f.Write()
@@ -239,16 +253,16 @@ ax.legend(loc="best")
 # ======================================================================
 # Fourth Plot
 
-f = open('./SummaryFiles/SummaryOf_'+input_file,'w')
-for i in xrange(len(i0lst)):
-    f.write(str(x[i]))
-    f.write(" ")
-    f.write(str(xerr[i]))
-    f.write(" ")
-    f.write(str(y[i]))
-    f.write(" ")
-    f.write(str(yerr[i]))
-    f.write(" \n")
+#f = open('./SummaryFiles/SummaryOf_'+input_file,'w')
+#for i in xrange(len(i0lst)):
+#    f.write(str(x[i]))
+#    f.write(" ")
+#    f.write(str(xerr[i]))
+#    f.write(" ")
+#    f.write(str(y[i]))
+#    f.write(" ")
+#    f.write(str(yerr[i]))
+#    f.write(" \n")
 
 fig, ax = plt.subplots()
 fig.suptitle(suptitle)
