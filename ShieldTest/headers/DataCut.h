@@ -153,8 +153,9 @@ void find_stable_regions(const vector<double> &current_grad, vector<double> &reg
 	}
 }
 
-void extrapolate_field(const vector<double> &InternalField, const vector<double> &time, double start, double end, vector<double> &InternalField_stable, vector<double> &InternalField_err)
+void extrapolate_field(const vector<double> &InternalField, const vector<double> &time, double start, double end, vector<double> &InternalField_stable, vector<double> &InternalField_err, double extrapolation_time)
 {
+
 	//Get a vector which is only the portion of internal field we are looking at
 	vector<double> InternalField_partial;
 	for (int i = start; i < end; i++)
@@ -188,29 +189,52 @@ void extrapolate_field(const vector<double> &InternalField, const vector<double>
 			stdev_line2_lin->SetLineStyle(7);
 			stdev_line2_lin->Draw("SAME");
 
+		cout << "       Average: " << mean_lin << "+/-" << stdev_lin << endl;
+
 		c1->Close();
 	}
 	else
 	{
-		TF1 *expfit = new TF1("expfit","[0]*(1 - TMath::Exp(-1*[1]*x))", gr1->GetXaxis()->GetXmin(), gr1->GetXaxis()->GetXmax());
-			expfit->SetParLimits(0, gr1->GetYaxis()->GetXmin(), gr1->GetYaxis()->GetXmax() + 100);
-			expfit->SetParameter(0,gr1->GetYaxis()->GetXmax());
-			expfit->SetParameter(1,0.001);
-		TF1 *logfit = new TF1("logfit","[0]*TMath::Log(x) + [1]", gr1->GetXaxis()->GetXmin(), gr1->GetXaxis()->GetXmax());
+
+		int div = 1; //Used for testing fits on different ranges with large datasets. Leave at 1 for actual execution.
+
+		TF1 *logfit = new TF1("logfit","[0]*TMath::Log(x) + [1]", gr1->GetXaxis()->GetXmin(), gr1->GetXaxis()->GetXmax()/div);
 			logfit->SetParameter(0,1);
 			logfit->SetParameter(1,gr1->GetXaxis()->GetXmin());
-		TF1 *logisticfit = new TF1("logisticfit","[0] / ( [1]*TMath::Exp(-1*[2]*x) + 1) +[3]", gr1->GetXaxis()->GetXmin(), gr1->GetXaxis()->GetXmax());
-			logisticfit->SetParLimits(0, gr1->GetYaxis()->GetXmin(), gr1->GetYaxis()->GetXmax() + 100);
-			logisticfit->SetParLimits(1, 0.0001, 1000);
-			logisticfit->SetParameter(0,gr1->GetYaxis()->GetXmax());
-			logisticfit->SetParameter(3,gr1->GetXaxis()->GetXmin());
-		TF1 *myfit = new TF1("myfit", "[0] - TMath::Exp(-1*[1]*x)*[2]", gr1->GetXaxis()->GetXmin(), gr1->GetXaxis()->GetXmax());
-			myfit->SetParLimits(1, 0.0001, 1000);
-		gr1->Fit("expfit","B R");
-		c1->Update();
+		gr1->Fit("logfit","B R Q");
+		TF1 *f1 = gr1->GetFunction("logfit");
+			f1->SetName("f1");
+			f1->SetLineColor(kBlue-3);
+			f1->SetRange(0,gr1->GetXaxis()->GetXmax());
 
-		InternalField_stable.push_back(expfit->Eval(gr1->GetXaxis()->GetXmax() + 1000 ));
-		InternalField_err.push_back(stdev_lin);
+		TCanvas *c2 = new TCanvas();
+		TGraph *gr2 = new TGraph(end-start, &time[start], &InternalField[start]);
+		gr2->Draw("ap");
+		TF1 *powerfit = new TF1("powerfit","[0]*TMath::Power((x+[1]),[2])", gr1->GetXaxis()->GetXmin(), gr1->GetXaxis()->GetXmax()/div);
+			powerfit->SetParameter(0,1);
+		gr2->Fit("powerfit","B R Q");
+		TF1 *f2 = gr2->GetFunction("powerfit");
+			f2->SetName("f2");
+			f2->SetLineColor(kGreen-3);
+			f2->SetRange(0,gr1->GetXaxis()->GetXmax());
+
+		TCanvas *c3 = new TCanvas();
+		TGraph *gr3 = new TGraph(end-start, &time[start], &InternalField[start]);
+		gr3->Draw("ap");
+		f1->Draw("SAME");
+		f2->Draw("SAME");
+		
+		c1->Close();
+		c2->Close();
+//		c3->Close();
+
+		double extrap_average = (TMath::Abs(f1->Eval(gr1->GetXaxis()->GetXmax() + extrapolation_time)) + TMath::Abs(f2->Eval(gr2->GetXaxis()->GetXmax() + extrapolation_time)))/2.0;
+		double extrap_err = TMath::Abs(TMath::Abs(f1->Eval(gr1->GetXaxis()->GetXmax() + extrapolation_time)) - TMath::Abs(f2->Eval(gr2->GetXaxis()->GetXmax() + extrapolation_time)));
+
+		cout << "       Extrapolation: " << extrap_average << "+/-" << extrap_err << endl;
+
+		InternalField_stable.push_back(extrap_average);
+		InternalField_err.push_back(extrap_err);
 	}
 
 }
@@ -228,6 +252,7 @@ int DataCut( std::string data_file_path, std::string summary_file_path, std::str
 	if(line_stop == 0)
 	{
 		unpack_file(data_file, time, current, InternalField);
+cout << "File unpacked" << endl;
 	}
 	else
 	{
@@ -238,7 +263,7 @@ int DataCut( std::string data_file_path, std::string summary_file_path, std::str
 	vector<double> AppliedField;
 	double conversion_factor = current_conversion(calibration_string, current, AppliedField);
 
-	remove_zero_offset(0, 10, InternalField);
+//	remove_zero_offset(0, 10, InternalField);
 
 	//If option is set, negate internal field
 	if(negation != "True")
@@ -256,15 +281,19 @@ int DataCut( std::string data_file_path, std::string summary_file_path, std::str
 	vector<double> region_start, region_end;
 	double threshold = 0.005;			//Current threshold for datacut. Anything above this indicates the changing of the current and the beginning of a new region
 	double length = 80;				//Minimum length of the region to save. Should be large enough to smooth out the curves
+//		region_start.push_back(0.00);
+//		region_end.push_back(current_grad.size());
 	find_stable_regions(current_grad, region_start, region_end, threshold, length);
 
+
+	double extrapolation_time = 100; 		//Seconds past the end of the region to extrapolate to.
 	vector<double> InternalField_stable, InternalField_err;
 	vector<double> ExternalField_stable, ExternalField_err;
 
 	//Extrapolate out the field values for the stable regions. Store them in the appropriate vectors. For the applied field simply take the mean/stdev.
 	for (int i = 0; i < region_start.size(); i++)
 	{
-		extrapolate_field(InternalField, time, region_start[i], region_end[i], InternalField_stable, InternalField_err);
+		extrapolate_field(InternalField, time, region_start[i], region_end[i], InternalField_stable, InternalField_err, extrapolation_time);
 		ExternalField_stable.push_back( mean_vector(AppliedField, region_start[i], region_end[i]) );
 		ExternalField_err.push_back( standard_deviation_vector(AppliedField, region_start[i], region_end[i]) );
 	}
@@ -291,7 +320,7 @@ int DataCut( std::string data_file_path, std::string summary_file_path, std::str
 		InternalField_err_i = InternalField_err[i];
 		ExternalField_i = ExternalField_stable[i];
 		ExternalField_err_i = ExternalField_err[i];
-//		ExternalField_err_i = 0.00;
+		ExternalField_err_i = 0.00;
 		current_i = ExternalField_i / conversion_factor;
 		current_err_i = ExternalField_err_i / conversion_factor;
 		t->Fill();
