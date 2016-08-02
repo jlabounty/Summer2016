@@ -172,8 +172,8 @@ void extrapolate_field(const vector<double> &InternalField, const vector<double>
 	TCanvas *c1 = new TCanvas();
 	TGraph *gr1 = new TGraph(end-start, &time[start], &InternalField[start]);
 	gr1->Draw("ap");
-	bool stdev_test = false;
-	if(TMath::Abs(InternalField[end]) > (TMath::Abs(InternalField[start]) + standard_deviation_vector(InternalField, start, end))) stdev_test = true;
+	bool stdev_test = true;
+	if(TMath::Abs(InternalField[end]) > (TMath::Abs(InternalField[start]) + standard_deviation_vector(InternalField, start, end))) stdev_test = false;
 	if((InternalField[end] < 1.0) || ((end-start) < 500) || stdev_test)	//For small data sets, the fits do not work well. 
 	{
 		// average and stdev
