@@ -135,6 +135,7 @@ void find_stable_regions(const vector<double> &current_grad, vector<double> &reg
 					if(j - i - 1 > length)
 					{
 						region_start.push_back(i);
+						//region_start.push_back(i+15);
 						region_end.push_back(j);
 						i = j + 1;
 						continue;
@@ -171,7 +172,9 @@ void extrapolate_field(const vector<double> &InternalField, const vector<double>
 	TCanvas *c1 = new TCanvas();
 	TGraph *gr1 = new TGraph(end-start, &time[start], &InternalField[start]);
 	gr1->Draw("ap");
-	if(InternalField[end] < 1.0)	//Still working on the log fits. Until then, the simple method will have to do.
+	bool stdev_test = false;
+	if(TMath::Abs(InternalField[end]) > (TMath::Abs(InternalField[start]) + standard_deviation_vector(InternalField, start, end))) stdev_test = true;
+	if((InternalField[end] < 1.0) || ((end-start) < 500) || stdev_test)	//For small data sets, the fits do not work well. 
 	{
 		// average and stdev
 		InternalField_stable.push_back(mean_lin);
@@ -189,9 +192,9 @@ void extrapolate_field(const vector<double> &InternalField, const vector<double>
 			stdev_line2_lin->SetLineStyle(7);
 			stdev_line2_lin->Draw("SAME");
 
-		cout << "       Average: " << mean_lin << "+/-" << stdev_lin << endl;
+		cout << "Average: " << mean_lin << "+/-" << stdev_lin << endl;
 
-		c1->Close();
+//		c1->Close();
 	}
 	else
 	{
@@ -199,8 +202,8 @@ void extrapolate_field(const vector<double> &InternalField, const vector<double>
 		int div = 1; //Used for testing fits on different ranges with large datasets. Leave at 1 for actual execution.
 
 		TF1 *logfit = new TF1("logfit","[0]*TMath::Log(x) + [1]", gr1->GetXaxis()->GetXmin(), gr1->GetXaxis()->GetXmax()/div);
-			logfit->SetParameter(0,1);
-			logfit->SetParameter(1,gr1->GetXaxis()->GetXmin());
+			logfit->SetParameter(0,0.01);
+			logfit->SetParameter(1,mean_vector(InternalField_partial));
 		gr1->Fit("logfit","B R Q");
 		TF1 *f1 = gr1->GetFunction("logfit");
 			f1->SetName("f1");
@@ -210,8 +213,11 @@ void extrapolate_field(const vector<double> &InternalField, const vector<double>
 		TCanvas *c2 = new TCanvas();
 		TGraph *gr2 = new TGraph(end-start, &time[start], &InternalField[start]);
 		gr2->Draw("ap");
-		TF1 *powerfit = new TF1("powerfit","[0]*TMath::Power((x+[1]),[2])", gr1->GetXaxis()->GetXmin(), gr1->GetXaxis()->GetXmax()/div);
+		TF1 *powerfit = new TF1("powerfit","[0]*TMath::Power((x+[1]),[2]) + [3]", gr1->GetXaxis()->GetXmin(), gr1->GetXaxis()->GetXmax()/div);
 			powerfit->SetParameter(0,1);
+			powerfit->SetParameter(1,10);
+			powerfit->SetParameter(2,0.1);
+			powerfit->SetParameter(3,-1*mean_vector(InternalField_partial));
 		gr2->Fit("powerfit","B R Q");
 		TF1 *f2 = gr2->GetFunction("powerfit");
 			f2->SetName("f2");
@@ -223,7 +229,23 @@ void extrapolate_field(const vector<double> &InternalField, const vector<double>
 		gr3->Draw("ap");
 		f1->Draw("SAME");
 		f2->Draw("SAME");
-		
+
+		TCanvas *c4 = new TCanvas();
+		TH1F *blank2 = new TH1F("blank2","Time Dependance of Field",10,gr1->GetXaxis()->GetXmin()/100,gr1->GetXaxis()->GetXmax()*100);
+			blank2->GetYaxis()->SetRangeUser(-1,gr1->GetYaxis()->GetXmax()*10);
+			blank2->GetXaxis()->SetTitle("Time (Seconds)");
+			//blank->GetYaxis()->SetTitle("B_{0} - B_{i} (mT)");    //Shielding Factor y-axis
+			blank2->GetYaxis()->SetTitle("B_{i} (mT)");              //Internal vs. External Field y-axis
+			blank2->GetXaxis()->SetNdivisions(505);
+			blank2->GetYaxis()->SetNdivisions(505);
+			blank2->SetLineColor(0);
+		blank2->Draw();
+		gr3->Draw("p SAME");
+		f1->Draw("SAME");
+		f1->SetRange(gr1->GetXaxis()->GetXmin()/1000,gr1->GetXaxis()->GetXmax()*1000);
+		f2->Draw("SAME");
+		f2->SetRange(gr1->GetXaxis()->GetXmin()/1000,gr1->GetXaxis()->GetXmax()*1000);
+
 		c1->Close();
 		c2->Close();
 //		c3->Close();
@@ -231,7 +253,7 @@ void extrapolate_field(const vector<double> &InternalField, const vector<double>
 		double extrap_average = (TMath::Abs(f1->Eval(gr1->GetXaxis()->GetXmax() + extrapolation_time)) + TMath::Abs(f2->Eval(gr2->GetXaxis()->GetXmax() + extrapolation_time)))/2.0;
 		double extrap_err = TMath::Abs(TMath::Abs(f1->Eval(gr1->GetXaxis()->GetXmax() + extrapolation_time)) - TMath::Abs(f2->Eval(gr2->GetXaxis()->GetXmax() + extrapolation_time)));
 
-		cout << "       Extrapolation: " << extrap_average << "+/-" << extrap_err << endl;
+		cout << "Extrapolation: " << extrap_average << " +/- " << extrap_err << " after " << extrapolation_time << " seconds / " << extrapolation_time/(60*60) << " hours / " << extrapolation_time/(60*60*24) << " days" << endl;
 
 		InternalField_stable.push_back(extrap_average);
 		InternalField_err.push_back(extrap_err);
@@ -249,10 +271,14 @@ int DataCut( std::string data_file_path, std::string summary_file_path, std::str
 	vector<double> time, current, InternalField;
 
 	//If the line to stop at was set to 0, then unpack the whole file into the vector<doubles> above. Else unpack only to the line line_stop
+	if(!exists_test(data_file))
+	{
+		cerr << "ERROR: " << data_file << "  Not found." << endl;
+		return -1;
+	}
 	if(line_stop == 0)
 	{
 		unpack_file(data_file, time, current, InternalField);
-cout << "File unpacked" << endl;
 	}
 	else
 	{
@@ -263,7 +289,7 @@ cout << "File unpacked" << endl;
 	vector<double> AppliedField;
 	double conversion_factor = current_conversion(calibration_string, current, AppliedField);
 
-//	remove_zero_offset(0, 10, InternalField);
+	remove_zero_offset(0, 10, InternalField);
 
 	//If option is set, negate internal field
 	if(negation != "True")
@@ -284,15 +310,26 @@ cout << "File unpacked" << endl;
 //		region_start.push_back(0.00);
 //		region_end.push_back(current_grad.size());
 	find_stable_regions(current_grad, region_start, region_end, threshold, length);
+	if(region_start.size() == 0)
+	{
+		cerr << "       ERROR: No stable regions. Please adjust derivitive threshold or redo measurement." << endl;
+		return -1;
+	}
+	else
+	{
+		cout << "       FOUND: " << region_start.size() << " stable region(s)." << endl;
+	}
 
 
-	double extrapolation_time = 100; 		//Seconds past the end of the region to extrapolate to.
+	double extrapolation_time = 1.577*(10**7); 		//Seconds past the end of the region to extrapolate to. Half a year.
+//	double extrapolation_time = 1;				//Seconds past the end of the region to extrapolate to.
 	vector<double> InternalField_stable, InternalField_err;
 	vector<double> ExternalField_stable, ExternalField_err;
 
 	//Extrapolate out the field values for the stable regions. Store them in the appropriate vectors. For the applied field simply take the mean/stdev.
 	for (int i = 0; i < region_start.size(); i++)
 	{
+		cout << "              For Region " << i+1 << ": ";
 		extrapolate_field(InternalField, time, region_start[i], region_end[i], InternalField_stable, InternalField_err, extrapolation_time);
 		ExternalField_stable.push_back( mean_vector(AppliedField, region_start[i], region_end[i]) );
 		ExternalField_err.push_back( standard_deviation_vector(AppliedField, region_start[i], region_end[i]) );
@@ -319,7 +356,7 @@ cout << "File unpacked" << endl;
 		InternalField_i = InternalField_stable[i];
 		InternalField_err_i = InternalField_err[i];
 		ExternalField_i = ExternalField_stable[i];
-		ExternalField_err_i = ExternalField_err[i];
+//		ExternalField_err_i = ExternalField_err[i];
 		ExternalField_err_i = 0.00;
 		current_i = ExternalField_i / conversion_factor;
 		current_err_i = ExternalField_err_i / conversion_factor;
@@ -330,30 +367,4 @@ cout << "File unpacked" << endl;
 
 	return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
