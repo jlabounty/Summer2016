@@ -1,3 +1,5 @@
+//Credit to these functions to Rene Brun. Some modifications by me.
+// https://root.cern.ch/phpBB3/viewtopic.php?t=5520
 
 void shade(TCanvas &c1, TF1 &f1, TF1 &f2)
 {
