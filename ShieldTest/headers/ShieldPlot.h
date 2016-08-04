@@ -52,9 +52,11 @@ void shield_plot_root(std::string file_path, std::string summary_file_path, std:
 	//Plot the applied field vs. internal field on the canvas which was passed in by reference
 	c00.cd();
 	gr12 = new TGraphErrors(t->GetEntries(),t->GetV1(),t->GetV2(),t->GetV3(),t->GetV4());
-		gr12->Draw("PL SAME");
+		gr12->Draw("PL E3 SAME");
                 gr12->SetMarkerColor(color);
                 gr12->SetLineColor(color);
+                gr12->SetFillColor(color);
+                gr12->SetFillStyle(3013);
 
 	//Some optional linear extrapolation to higher fields
 	if(lin_extrap)
