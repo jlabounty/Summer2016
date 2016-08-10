@@ -101,17 +101,21 @@ double current_conversion(double calibration, vector<double> &current, vector<do
 //Subtracts a constant average value from a vector based on a select number of points at the beginning.
 void remove_zero_offset(int start, int finish, vector<double> &InternalField)
 {
+int j = 0;
+cout << j << endl; j++; 
 	double offset_average = 0.00;
 	for (int i = start; i < finish; i++)
 	{
 		offset_average = offset_average + InternalField[i];
 	}
 	offset_average = offset_average / (finish - start);
+cout << j << endl; j++; 
 
 	for(int i = 0; i < InternalField.size(); i++)
 	{
 		InternalField[i] = InternalField[i] - offset_average;
 	}
+cout << j << endl; j++; 
 }
 
 //Takes the 'gradient' of a vector by looking at simple point to point derivitive
@@ -275,7 +279,7 @@ void extrapolate_field(const vector<double> &InternalField, const vector<double>
 
 		TCanvas *c4 = new TCanvas();
 		TH1F *blank2 = new TH1F(("blank2"+region_string).c_str(),"Time Dependance of Field",10,gr1->GetXaxis()->GetXmin()/100,gr1->GetXaxis()->GetXmax()*10);
-			blank2->GetYaxis()->SetRangeUser(-1,gr1->GetYaxis()->GetXmax()*1000);
+			blank2->GetYaxis()->SetRangeUser(-1,gr1->GetYaxis()->GetXmax()*10);
 			blank2->GetXaxis()->SetTitle("Time (Seconds)");
 			//blank->GetYaxis()->SetTitle("B_{0} - B_{i} (mT)");    //Shielding Factor y-axis
 			blank2->GetYaxis()->SetTitle("B_{i} (mT)");              //Internal vs. External Field y-axis
@@ -298,11 +302,16 @@ void extrapolate_field(const vector<double> &InternalField, const vector<double>
 		InternalField_stable.push_back(extrap_average);
 		InternalField_err.push_back(extrap_err);
 
+//		c1->Print(("./plots/c1"+region_string+".png").c_str());
 		c1->Close();
+//		c2->Print(("./plots/c2"+region_string+".png").c_str());
 		c2->Close();
+//		c3->Print(("./plots/c3"+region_string+".png").c_str());
 		c3->Close();
+//		c4->Print(("./plots/c4"+region_string+".png").c_str());
 		c4->Close();
 	}
+	region_count++;
 
 }
 
@@ -375,7 +384,6 @@ int DataCut( std::string data_file_path, std::string summary_file_path, std::str
 	{
 		cout << "              For Region " << i+1 << " (starting at t = " << TMath::Nint(time[region_start[i]]) << "): ";
 		extrapolate_field(InternalField, time, region_start[i], region_end[i], InternalField_stable, InternalField_err, extrapolation_time);
-		region_count++;
 		ExternalField_stable.push_back( mean_vector(AppliedField, region_start[i], region_end[i]) );
 		ExternalField_err.push_back( standard_deviation_vector(AppliedField, region_start[i], region_end[i]) );
 	}
@@ -415,14 +423,16 @@ int DataCut( std::string data_file_path, std::string summary_file_path, std::str
 
 
 
-int DataCut_SepFiles( std::string data_file_path, vector<std::string> *summary_file_path_vector, std::string data_file_name, std::string calibration_string, std::string negation, int line_stop)
+int DataCut_SepFiles( std::string data_file_path, std::string summary_file_path, const vector<std::string> &data_file_name_vector, std::string calibration_string, std::string negation, int line_stop)
 {
-	std::string data_file_root = (data_file_name.erase(data_file_name_vector[0].size()-3,3)).append("root");
+	std::string str = data_file_name_vector[0];
+	std::string data_file_root = (str.erase(str.size()-3,3)).append("root");
 	TFile f((summary_file_path+"SummaryOf_"+data_file_root).c_str(),"RECREATE");
 	TTree *t = new TTree("t","Shielding Measurement with Long Time Extrapolation");
 	double InternalField_i, InternalField_err_i;
 	double ExternalField_i, ExternalField_err_i;
 	double current_i, current_err_i;
+	double conversion_factor;
 
 	TBranch *b_InternalField = t->Branch("Bi",&InternalField_i,"Field inside SC/D");
 	TBranch *b_InternalField_err = t->Branch("BiErr",&InternalField_err_i,"Error in Field inside SC/D");
@@ -432,8 +442,9 @@ int DataCut_SepFiles( std::string data_file_path, vector<std::string> *summary_f
 	TBranch *b_current = t->Branch("I",&current_i,"Current through shunt/D");
 	TBranch *b_current_err = t->Branch("IErr",&current_err_i,"Error in Current through shunt/D");
 	
-	for(int file_int = 0; file_int < summary_file_path_vector.size(); file_int++)
+	for(int file_int = 0; file_int < data_file_name_vector.size(); file_int++)
 	{
+		std::string data_file_name = data_file_name_vector[file_int];
 		cout << "       Executing DataCut function for file: " << data_file_name << endl;
 		std::string data_file = data_file_path+data_file_name_vector[file_int];
 		vector<double> time, current, InternalField;
@@ -457,9 +468,6 @@ int DataCut_SepFiles( std::string data_file_path, vector<std::string> *summary_f
 		vector<double> AppliedField;
 		double conversion_factor = current_conversion(calibration_string, current, AppliedField);
 
-		//Remove any offset from the ambient field if the probe was zeroed in the mu metal
-		remove_zero_offset(0, 10, InternalField);
-
 		//If option is set, negate internal field
 		if(negation != "True")
 		{
@@ -470,8 +478,8 @@ int DataCut_SepFiles( std::string data_file_path, vector<std::string> *summary_f
 		}
 
 		vector<double> region_start, region_end;	//Vectors which define the regions. region_start[i] and region_end[i] will define the beginning and end of one region.
-		region_start.push_back(1500);
-		region_end.push_back(current_grad.size());
+		region_start.push_back(0);
+		region_end.push_back(InternalField.size());
 
 	//	double extrapolation_time = 1.577*(10**7); 		//Seconds past the end of the region to extrapolate to. Half a year.
 		double extrapolation_time = 100000;			//Seconds past the end of the region to extrapolate to.
@@ -481,9 +489,8 @@ int DataCut_SepFiles( std::string data_file_path, vector<std::string> *summary_f
 		//Extrapolate out the field values for the stable regions. Store them in the appropriate vectors. For the applied field simply take the mean/stdev.
 		for (int i = 0; i < region_start.size(); i++)
 		{
-			cout << "              For Region " << i+1 << " (starting at t = " << TMath::Nint(time[region_start[i]]) << "): ";
+			cout << "              For Region " << region_count << " (starting at t = " << TMath::Nint(time[region_start[i]]) << "): ";
 			extrapolate_field(InternalField, time, region_start[i], region_end[i], InternalField_stable, InternalField_err, extrapolation_time);
-			region_count++;
 			ExternalField_stable.push_back( mean_vector(AppliedField, region_start[i], region_end[i]) );
 			ExternalField_err.push_back( standard_deviation_vector(AppliedField, region_start[i], region_end[i]) );
 		}
