@@ -413,3 +413,97 @@ int DataCut( std::string data_file_path, std::string summary_file_path, std::str
 	return 0;
 }
 
+
+
+int DataCut_SepFiles( std::string data_file_path, vector<std::string> *summary_file_path_vector, std::string data_file_name, std::string calibration_string, std::string negation, int line_stop)
+{
+	std::string data_file_root = (data_file_name.erase(data_file_name_vector[0].size()-3,3)).append("root");
+	TFile f((summary_file_path+"SummaryOf_"+data_file_root).c_str(),"RECREATE");
+	TTree *t = new TTree("t","Shielding Measurement with Long Time Extrapolation");
+	double InternalField_i, InternalField_err_i;
+	double ExternalField_i, ExternalField_err_i;
+	double current_i, current_err_i;
+
+	TBranch *b_InternalField = t->Branch("Bi",&InternalField_i,"Field inside SC/D");
+	TBranch *b_InternalField_err = t->Branch("BiErr",&InternalField_err_i,"Error in Field inside SC/D");
+	TBranch *b_ExternalField = t->Branch("Bo",&ExternalField_i,"Field outside SC/D");
+	TBranch *b_ExternalField_err = t->Branch("BoErr",&ExternalField_err_i,"Error in Field outside SC/D");
+	TBranch *b_calibration = t->Branch("Calibration",&conversion_factor,"Calibration Factor A<->mT/D");
+	TBranch *b_current = t->Branch("I",&current_i,"Current through shunt/D");
+	TBranch *b_current_err = t->Branch("IErr",&current_err_i,"Error in Current through shunt/D");
+	
+	for(int file_int = 0; file_int < summary_file_path_vector.size(); file_int++)
+	{
+		cout << "       Executing DataCut function for file: " << data_file_name << endl;
+		std::string data_file = data_file_path+data_file_name_vector[file_int];
+		vector<double> time, current, InternalField;
+
+		//If the line to stop at was set to 0, then unpack the whole file into the vector<doubles> above. Else unpack only to the line line_stop
+		if(!exists_test(data_file))
+		{
+			cerr << "ERROR: " << data_file << "  Not found." << endl;
+			return -1;
+		}
+		if(line_stop == 0)
+		{
+			unpack_file(data_file, time, current, InternalField);
+		}
+		else
+		{
+			unpack_file(data_file, time, current, InternalField, line_stop);
+		}	
+
+		//Convert the current into applied field using the known calibration factor
+		vector<double> AppliedField;
+		double conversion_factor = current_conversion(calibration_string, current, AppliedField);
+
+		//Remove any offset from the ambient field if the probe was zeroed in the mu metal
+		remove_zero_offset(0, 10, InternalField);
+
+		//If option is set, negate internal field
+		if(negation != "True")
+		{
+			for(int i = 0; i < InternalField.size(); i++)
+			{
+				InternalField[i] = InternalField[i]*-1.00;
+			}
+		}
+
+		vector<double> region_start, region_end;	//Vectors which define the regions. region_start[i] and region_end[i] will define the beginning and end of one region.
+		region_start.push_back(1500);
+		region_end.push_back(current_grad.size());
+
+	//	double extrapolation_time = 1.577*(10**7); 		//Seconds past the end of the region to extrapolate to. Half a year.
+		double extrapolation_time = 100000;			//Seconds past the end of the region to extrapolate to.
+		vector<double> InternalField_stable, InternalField_err;
+		vector<double> ExternalField_stable, ExternalField_err;
+
+		//Extrapolate out the field values for the stable regions. Store them in the appropriate vectors. For the applied field simply take the mean/stdev.
+		for (int i = 0; i < region_start.size(); i++)
+		{
+			cout << "              For Region " << i+1 << " (starting at t = " << TMath::Nint(time[region_start[i]]) << "): ";
+			extrapolate_field(InternalField, time, region_start[i], region_end[i], InternalField_stable, InternalField_err, extrapolation_time);
+			region_count++;
+			ExternalField_stable.push_back( mean_vector(AppliedField, region_start[i], region_end[i]) );
+			ExternalField_err.push_back( standard_deviation_vector(AppliedField, region_start[i], region_end[i]) );
+		}
+
+		//Write all of this data to a root tree within a .root summary file	
+
+		for(int i = 0; i < InternalField_stable.size(); i++)
+		{
+			InternalField_i = InternalField_stable[i];
+			InternalField_err_i = InternalField_err[i];
+			ExternalField_i = ExternalField_stable[i];
+			ExternalField_err_i = ExternalField_err[i];
+			current_i = ExternalField_i / conversion_factor;
+			current_err_i = ExternalField_err_i / conversion_factor;
+			t->Fill();
+		}
+
+		f.Write();
+	}
+		f.Close();
+
+	return 0;
+}
